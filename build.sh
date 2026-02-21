@@ -9,4 +9,7 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 
 # Run database migrations
-python manage.py migrate  # Add this line
+python manage.py migrate
+
+# Create superuser if it doesn't exist (using env vars)
+python manage.py ensure_superuser
