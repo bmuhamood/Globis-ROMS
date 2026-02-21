@@ -45,9 +45,9 @@ else:
     # Create a sample .env file if it doesn't exist
     with open(BASE_DIR / '.env.example', 'w') as f:
         f.write("""# Django Settings
-DEBUG=False
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 SECRET_KEY=your-secret-key-here
-ALLOWED_HOSTS=localhost,127.0.0.1,yourdomain.com
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 CSRF_TRUSTED_ORIGINS=https://yourdomain.com
 
 # Database (SQLite default, use PostgreSQL in production)
@@ -144,7 +144,7 @@ import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=env('DATABASE_URL'),
+        default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3'),
         conn_max_age=600,
         conn_health_checks=True,
     )
