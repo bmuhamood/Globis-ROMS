@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="text-secondary">
+            <i class="fas fa-passport me-2"></i>
+            Update Visa Process - {{ visa.candidate.full_name }}
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header" style="background: linear-gradient(135deg, #0184FC, #00016E); color: white;">
+                <h5 class="mb-0">Visa Processing Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Current Progress</label>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ visa.progress_percentage }}%; background: linear-gradient(90deg, #0184FC, #5EAAE1);" 
+                                     aria-valuenow="{{ visa.progress_percentage }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ visa.progress_percentage }}% Complete
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="interview_status" class="form-label">Interview Status</label>
+                            <select class="form-select" id="interview_status" name="interview_status">
+                                <option value="pending" {% if visa.interview_status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="in_progress" {% if visa.interview_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="completed" {% if visa.interview_status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="rejected" {% if visa.interview_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="medical_status" class="form-label">Medical Status</label>
+                            <select class="form-select" id="medical_status" name="medical_status">
+                                <option value="pending" {% if visa.medical_status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="in_progress" {% if visa.medical_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="completed" {% if visa.medical_status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="rejected" {% if visa.medical_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="interpol_status" class="form-label">Interpol Status</label>
+                            <select class="form-select" id="interpol_status" name="interpol_status">
+                                <option value="pending" {% if visa.interpol_status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="in_progress" {% if visa.interpol_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="completed" {% if visa.interpol_status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="rejected" {% if visa.interpol_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="visa_applied" name="visa_applied" {% if visa.visa_applied %}checked{% endif %}>
+                                <label class="form-check-label" for="visa_applied">Visa Applied</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="visa_stamped" name="visa_stamped" {% if visa.visa_stamped %}checked{% endif %}>
+                                <label class="form-check-label" for="visa_stamped">Visa Stamped</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ticket_issued" name="ticket_issued" {% if visa.ticket_issued %}checked{% endif %}>
+                                <label class="form-check-label" for="ticket_issued">Ticket Issued</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end mt-4">
+                        <a href="{% url 'visa_list' %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Visa Process
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

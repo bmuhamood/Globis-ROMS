@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="text-secondary"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+        <p class="text-muted">Welcome back, {{ user.username }}! Here's what's happening with your recruitment operations.</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mt-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Candidates</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_candidates }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x" style="color: #0184FC;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Cash In Hand</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">UGX{{ cash_in_hand|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Ready To Travel</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ready_to_travel }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-plane fa-2x" style="color: #5EAAE1;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Missing Documents</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ missing_docs_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between" style="background: linear-gradient(135deg, #0184FC 0%, #00016E 100%); color: white;">
+                <h6 class="m-0 font-weight-bold">Monthly Overview</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="myAreaChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3" style="background: #00016E; color: white;">
+                <h6 class="m-0 font-weight-bold">Visa Progress</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4">
+                    <canvas id="myPieChart"></canvas>
+                </div>
+                <div class="mt-4 text-center small">
+                    <span class="mr-2">
+                        <i class="fas fa-circle" style="color: #0184FC;"></i> In Progress
+                    </span>
+                    <span class="mr-2">
+                        <i class="fas fa-circle" style="color: #5EAAE1;"></i> Ready to Travel
+                    </span>
+                    <span class="mr-2">
+                        <i class="fas fa-circle" style="color: #ffc107;"></i> Pending
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Row -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3" style="background: #0184FC; color: white;">
+                <h6 class="m-0 font-weight-bold">Recent Candidates</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Passport</th>
+                                <th>Position</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for candidate in recent_candidates %}
+                            <tr>
+                                <td>{{ candidate.full_name }}</td>
+                                <td>{{ candidate.passport_no }}</td>
+                                <td>{{ candidate.position }}</td>
+                                <td><span class="badge bg-info">New</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No candidates found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3" style="background: #00016E; color: white;">
+                <h6 class="m-0 font-weight-bold">Recent Placements</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Candidate</th>
+                                <th>Client</th>
+                                <th>Fee</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for placement in recent_placements %}
+                            <tr>
+                                <td>{{ placement.candidate.full_name }}</td>
+                                <td>{{ placement.client.company_name }}</td>
+                                <td>UGX{{ placement.placement_fee }}</td>
+                                <td>
+                                    {% if placement.payment_status == 'paid' %}
+                                        <span class="badge bg-success">Paid</span>
+                                    {% elif placement.payment_status == 'partial' %}
+                                        <span class="badge bg-warning">Partial</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Pending</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No placements found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Summary -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3" style="background: #5EAAE1; color: white;">
+                <h6 class="m-0 font-weight-bold">Financial Summary</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <div class="text-primary font-weight-bold">Candidate Payments</div>
+                        <div class="h5">UGX{{ total_candidate_payments|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="text-success font-weight-bold">Client Payments</div>
+                        <div class="h5">UGX{{ total_client_payments|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="text-danger font-weight-bold">Expenses</div>
+                        <div class="h5">UGX{{ total_expenses|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="text-info font-weight-bold">Net Cash</div>
+                        <div class="h5">UGX{{ cash_in_hand|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Area Chart
+    var ctx = document.getElementById("myAreaChart");
+    var myLineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ months|safe }},
+            datasets: [{
+                label: "Income",
+                lineTension: 0.3,
+                backgroundColor: "rgba(1, 132, 252, 0.05)",
+                borderColor: "#0184FC",
+                pointRadius: 3,
+                pointBackgroundColor: "#0184FC",
+                pointBorderColor: "#0184FC",
+                pointHoverRadius: 3,
+                pointHoverBackgroundColor: "#0184FC",
+                pointHoverBorderColor: "#0184FC",
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                data: {{ income_data|safe }},
+            },
+            {
+                label: "Expenses",
+                lineTension: 0.3,
+                backgroundColor: "rgba(220, 53, 69, 0.05)",
+                borderColor: "#dc3545",
+                pointRadius: 3,
+                pointBackgroundColor: "#dc3545",
+                pointBorderColor: "#dc3545",
+                pointHoverRadius: 3,
+                pointHoverBackgroundColor: "#dc3545",
+                pointHoverBorderColor: "#dc3545",
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                data: {{ expense_data|safe }},
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 25,
+                    top: 25,
+                    bottom: 0
+                }
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        maxTicksLimit: 5,
+                        padding: 10,
+                        callback: function(value, index, values) {
+                            return 'UGX' + value;
+                        }
+                    },
+                    gridLines: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                }],
+            },
+            legend: {
+                display: true
+            },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                titleMarginBottom: 10,
+                titleFontColor: '#6e707e',
+                titleFontSize: 14,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                intersect: false,
+                mode: 'index',
+                caretPadding: 10,
+                callbacks: {
+                    label: function(tooltipItem, chart) {
+                        var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+                        return datasetLabel + ': UGX' + tooltipItem.yLabel;
+                    }
+                }
+            }
+        }
+    });
+
+    // Pie Chart
+    var ctx = document.getElementById("myPieChart");
+    var myPieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ["In Progress", "Ready to Travel", "Pending"],
+            datasets: [{
+                data: [{{ visa_in_progress }}, {{ ready_to_travel }}, {{ total_candidates|add:"-30" }}],
+                backgroundColor: ['#0184FC', '#5EAAE1', '#ffc107'],
+                hoverBackgroundColor: ['#0184FC', '#5EAAE1', '#ffc107'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+            legend: {
+                display: false
+            },
+            cutoutPercentage: 80,
+        },
+    });
+</script>
+{% endblock %}

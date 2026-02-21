@@ -1,0 +1,477 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-passport me-2"></i>{{ report_type }}</h4>
+                <p class="text-muted small mb-0">Generated on {% now "F j, Y" %} at {% now "H:i" %}</p>
+            </div>
+            <div>
+                <button onclick="window.print()" class="btn btn-primary btn-sm">
+                    <i class="fas fa-print me-1"></i>Print
+                </button>
+                <a href="{% url 'report_list' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards - Compact -->
+<div class="row mt-3">
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Total Candidates</div>
+                        <div class="h5 fw-bold mb-0">{{ stats.total }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-users text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-info text-uppercase mb-0">Visa Applied</div>
+                        <div class="h5 fw-bold mb-0">{{ stats.visa_applied }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-info bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-file text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Visa Stamped</div>
+                        <div class="h5 fw-bold mb-0">{{ stats.visa_stamped }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-check-circle text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">Ready to Travel</div>
+                        <div class="h5 fw-bold mb-0">{{ stats.ticket_issued }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-plane text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section (only visible on screen, hidden when printing) -->
+<div class="row mt-2 d-print-none">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-filter me-2"></i>Filter Report</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Search</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" class="form-control form-control-sm" name="search" placeholder="Name or Passport..." value="{{ search_query }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Interview</label>
+                        <select class="form-select form-select-sm" name="interview">
+                            <option value="">All</option>
+                            <option value="completed" {% if interview_filter == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="in_progress" {% if interview_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="pending" {% if interview_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Medical</label>
+                        <select class="form-select form-select-sm" name="medical">
+                            <option value="">All</option>
+                            <option value="completed" {% if medical_filter == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="in_progress" {% if medical_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="pending" {% if medical_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Interpol</label>
+                        <select class="form-select form-select-sm" name="interpol">
+                            <option value="">All</option>
+                            <option value="completed" {% if interpol_filter == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="in_progress" {% if interpol_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="pending" {% if interpol_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Status</label>
+                        <select class="form-select form-select-sm" name="status">
+                            <option value="">All</option>
+                            <option value="ready" {% if status_filter == 'ready' %}selected{% endif %}>Ready to Travel</option>
+                            <option value="applied" {% if status_filter == 'applied' %}selected{% endif %}>Visa Applied</option>
+                            <option value="stamped" {% if status_filter == 'stamped' %}selected{% endif %}>Visa Stamped</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>In Process</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary btn-sm px-3">
+                            <i class="fas fa-filter me-1"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'visa_status_report' %}" class="btn btn-outline-secondary btn-sm px-3">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="exportTableToExcel()">
+                            <i class="fas fa-file-excel me-1"></i>Export
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Filter Tabs -->
+<div class="row mt-2 d-print-none">
+    <div class="col-12">
+        <ul class="nav nav-pills nav-fill bg-light rounded p-1 small">
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if not filter_type %}active{% endif %}" href="{% url 'visa_status_report' %}">
+                    <i class="fas fa-list me-1"></i>All
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'ready' %}active{% endif %}" href="?status=ready">
+                    <i class="fas fa-plane me-1 text-success"></i>Ready to Travel
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'applied' %}active{% endif %}" href="?status=applied">
+                    <i class="fas fa-file me-1 text-info"></i>Visa Applied
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'stamped' %}active{% endif %}" href="?status=stamped">
+                    <i class="fas fa-check-circle me-1 text-success"></i>Visa Stamped
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'pending' %}active{% endif %}" href="?status=pending">
+                    <i class="fas fa-hourglass me-1 text-warning"></i>In Process
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Visa Status Table -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small">Visa Processing Status</h6>
+                <span class="badge bg-primary">{{ visas|length }} Records</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small" id="visaTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2">#</th>
+                                <th class="px-2 py-2" onclick="sortTable(1)">Candidate <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2" onclick="sortTable(2)">Passport <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2">Progress</th>
+                                <th class="px-2 py-2 text-center">Interview</th>
+                                <th class="px-2 py-2 text-center">Medical</th>
+                                <th class="px-2 py-2 text-center">Interpol</th>
+                                <th class="px-2 py-2 text-center">Applied</th>
+                                <th class="px-2 py-2 text-center">Stamped</th>
+                                <th class="px-2 py-2 text-center">Ticket</th>
+                                <th class="px-2 py-2 text-center">Status</th>
+                                <th class="px-2 py-2 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for visa in visas %}
+                            <tr>
+                                <td class="px-2">{{ forloop.counter }}</td>
+                                <td class="px-2 fw-semibold">
+                                    <a href="{% url 'candidate_detail' visa.candidate.id %}" class="text-decoration-none">
+                                        {{ visa.candidate.full_name|truncatechars:20 }}
+                                    </a>
+                                </td>
+                                <td class="px-2 font-monospace">{{ visa.candidate.passport_no|truncatechars:12 }}</td>
+                                <td class="px-2" style="min-width: 100px;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1" style="height: 6px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ visa.progress_percentage }}%; background: linear-gradient(90deg, #0184FC, #5EAAE1);"></div>
+                                        </div>
+                                        <span class="ms-2 small fw-bold">{{ visa.progress_percentage }}%</span>
+                                    </div>
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if visa.interview_status == 'completed' %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.65rem;">Done</span>
+                                    {% elif visa.interview_status == 'in_progress' %}
+                                        <span class="badge bg-warning px-2 py-1" style="font-size: 0.65rem;">In Prog</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary px-2 py-1" style="font-size: 0.65rem;">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if visa.medical_status == 'completed' %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.65rem;">Done</span>
+                                    {% elif visa.medical_status == 'in_progress' %}
+                                        <span class="badge bg-warning px-2 py-1" style="font-size: 0.65rem;">In Prog</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary px-2 py-1" style="font-size: 0.65rem;">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if visa.interpol_status == 'completed' %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.65rem;">Done</span>
+                                    {% elif visa.interpol_status == 'in_progress' %}
+                                        <span class="badge bg-warning px-2 py-1" style="font-size: 0.65rem;">In Prog</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary px-2 py-1" style="font-size: 0.65rem;">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if visa.visa_applied %}
+                                        <i class="fas fa-check-circle text-success" style="font-size: 1rem;"></i>
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger" style="font-size: 1rem;"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if visa.visa_stamped %}
+                                        <i class="fas fa-check-circle text-success" style="font-size: 1rem;"></i>
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger" style="font-size: 1rem;"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if visa.ticket_issued %}
+                                        <i class="fas fa-check-circle text-success" style="font-size: 1rem;"></i>
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger" style="font-size: 1rem;"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if visa.visa_stamped and visa.ticket_issued %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.65rem;">Ready</span>
+                                    {% elif visa.visa_stamped %}
+                                        <span class="badge bg-info px-2 py-1" style="font-size: 0.65rem;">Stamped</span>
+                                    {% elif visa.visa_applied %}
+                                        <span class="badge bg-primary px-2 py-1" style="font-size: 0.65rem;">Applied</span>
+                                    {% else %}
+                                        <span class="badge bg-warning px-2 py-1" style="font-size: 0.65rem;">Process</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'visa_update' visa.id %}" class="btn btn-outline-primary" title="Update Visa">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'candidate_detail' visa.candidate.id %}" class="btn btn-outline-info" title="View Candidate">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="12" class="text-center py-4">
+                                    <i class="fas fa-passport fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No visa records found</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Footer (only visible when printing) -->
+<div class="d-none d-print-block mt-5">
+    <hr>
+    <div class="row">
+        <div class="col-6">
+            <p class="small text-muted">Generated by: {{ user.get_full_name|default:user.username }}</p>
+        </div>
+        <div class="col-6 text-end">
+            <p class="small text-muted">Page <span class="page-number"></span></p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById('visaTable');
+        if (!table) return;
+        
+        switching = true;
+        dir = 'asc';
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName('TD')[n];
+                y = rows[i + 1].getElementsByTagName('TD')[n];
+                
+                if (x && y) {
+                    if (dir == 'asc') {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == 'desc') {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == 'asc') {
+                    dir = 'desc';
+                    switching = true;
+                }
+            }
+        }
+    }
+    
+    function exportTableToExcel() {
+        var table = document.getElementById('visaTable');
+        var html = table.outerHTML;
+        var url = 'data:application/vnd.ms-excel,' + escape(html);
+        var link = document.createElement('a');
+        link.download = 'visa_status_report.xls';
+        link.href = url;
+        link.click();
+    }
+    
+    // Add print optimization
+    window.onbeforeprint = function() {
+        var table = document.getElementById('visaTable');
+        if (table) {
+            table.style.width = '100%';
+        }
+    };
+</script>
+{% endblock %}
+
+<style>
+    @media print {
+        .d-print-none {
+            display: none !important;
+        }
+        .d-print-block {
+            display: block !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: black !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .badge {
+            border: 1px solid #000 !important;
+            color: black !important;
+            background-color: transparent !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+    
+    .table > :not(caption) > * > * {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h5 {
+        font-size: 1rem;
+    }
+    .small, .form-label {
+        font-size: 0.7rem;
+    }
+    .form-select-sm, .form-control-sm {
+        font-size: 0.75rem;
+    }
+    .badge {
+        font-weight: 500;
+        font-size: 0.65rem;
+    }
+    h4 {
+        font-size: 1.3rem;
+    }
+    .progress {
+        background-color: #e9ecef;
+    }
+</style>

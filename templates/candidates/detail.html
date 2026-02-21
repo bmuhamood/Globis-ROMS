@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="text-secondary"><i class="fas fa-user-graduate me-2"></i>{{ candidate.full_name }}</h2>
+            <div>
+                {% if can_edit %}
+                <a href="{% url 'candidate_edit' candidate.id %}" class="btn btn-warning">
+                    <i class="fas fa-edit me-2"></i>Edit
+                </a>
+                {% endif %}
+                <a href="{% url 'candidate_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Status Banner -->
+{% if candidate.payment_plan != 'cash' %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="alert {% if candidate.fully_paid %}alert-success{% else %}alert-warning{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas {% if candidate.fully_paid %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %} me-2"></i>
+                    <strong>Payment Plan:</strong> {{ candidate.get_payment_plan_display }}
+                    {% if candidate.payment_plan == 'loan' and candidate.loan_provider %}
+                    - {{ candidate.loan_provider }} (Ref: {{ candidate.loan_reference }})
+                    {% endif %}
+                </div>
+                <div>
+                    {% if not candidate.fully_paid %}
+                    <a href="{% url 'create_payment_schedule' candidate.id %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-calendar-alt me-2"></i>Create Schedule
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'loan_payment_history' candidate.id %}" class="btn btn-sm btn-info">
+                        <i class="fas fa-history me-2"></i>View History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-4">
+    <!-- Personal Information Column -->
+    <div class="col-md-4">
+        <div class="card shadow mb-4">
+            <div class="card-header" style="background: #0184FC; color: white;">
+                <h5 class="mb-0">Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Full Name:</th>
+                        <td>{{ candidate.full_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Passport No:</th>
+                        <td>{{ candidate.passport_no }}</td>
+                    </tr>
+                    <tr>
+                        <th>Passport Expiry:</th>
+                        <td>{{ candidate.passport_expiry|date:"M d, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Position:</th>
+                        <td>{{ candidate.position }}</td>
+                    </tr>
+                    <tr>
+                        <th>Contact:</th>
+                        <td>{{ candidate.contact_number }}</td>
+                    </tr>
+                    <tr>
+                        <th>Blood Group:</th>
+                        <td>{{ candidate.blood_group|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Mother's Name:</th>
+                        <td>{{ candidate.mother_name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Father's Name:</th>
+                        <td>{{ candidate.father_name|default:"-" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Employment Details Column -->
+    <div class="col-md-4">
+        <div class="card shadow mb-4">
+            <div class="card-header" style="background: #00016E; color: white;">
+                <h5 class="mb-0">Employment Details</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Agent:</th>
+                        <td>{{ candidate.agent.name|default:"Not Assigned" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Client:</th>
+                        <td>{{ candidate.client.company_name|default:"Not Assigned" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Salary:</th>
+                        <td>UGX {{ candidate.salary|floatformat:0 }}</td>  <!-- Fixed missing curly braces -->
+                    </tr>
+                    <tr>
+                        <th>Remarks:</th>
+                        <td>{{ candidate.remarks|linebreaks|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Registered:</th>
+                        <td>{{ candidate.created_at|date:"M d, Y" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Document Status -->
+        <div class="card shadow mb-4">
+            <div class="card-header" style="background: #5EAAE1; color: white;">
+                <h5 class="mb-0">Document Status</h5>
+            </div>
+            <div class="card-body">
+                {% if documents %}
+                <table class="table">
+                    <tr>
+                        <th>Medical Report:</th>
+                        <td>
+                            {% if documents.medical_report %}
+                                <i class="fas fa-check-circle text-success"></i> Yes
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> No
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Interpol:</th>
+                        <td>
+                            {% if documents.interpol %}
+                                <i class="fas fa-check-circle text-success"></i> Yes
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> No
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Passport Copy:</th>
+                        <td>
+                            {% if documents.passport_copy %}
+                                <i class="fas fa-check-circle text-success"></i> Yes
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> No
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Passport Photo:</th>
+                        <td>
+                            {% if documents.passport_photo %}
+                                <i class="fas fa-check-circle text-success"></i> Yes
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> No
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Offer Letter:</th>
+                        <td>
+                            {% if documents.offer_letter %}
+                                <i class="fas fa-check-circle text-success"></i> Yes
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> No
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>MOL Approval:</th>
+                        <td>
+                            {% if documents.mol_approval %}
+                                <i class="fas fa-check-circle text-success"></i> Yes
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> No
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+                {% else %}
+                <p class="text-muted">No document records found</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Visa and Payment Column -->
+    <div class="col-md-4">
+        <!-- Visa Process -->
+        <div class="card shadow mb-4">
+            <div class="card-header" style="background: #0184FC; color: white;">
+                <h5 class="mb-0">Visa Process</h5>
+            </div>
+            <div class="card-body">
+                {% if visa %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Overall Progress</label>
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {{ visa.progress_percentage }}%;" 
+                             aria-valuenow="{{ visa.progress_percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ visa.progress_percentage }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <table class="table">
+                    <tr>
+                        <th>Interview:</th>
+                        <td>
+                            <span class="badge {% if visa.interview_status == 'completed' %}bg-success{% elif visa.interview_status == 'in_progress' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ visa.interview_status|title }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Medical:</th>
+                        <td>
+                            <span class="badge {% if visa.medical_status == 'completed' %}bg-success{% elif visa.medical_status == 'in_progress' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ visa.medical_status|title }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Interpol:</th>
+                        <td>
+                            <span class="badge {% if visa.interpol_status == 'completed' %}bg-success{% elif visa.interpol_status == 'in_progress' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ visa.interpol_status|title }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Visa Applied:</th>
+                        <td>
+                            {% if visa.visa_applied %}
+                                <i class="fas fa-check-circle text-success"></i> Yes
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> No
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Visa Stamped:</th>
+                        <td>
+                            {% if visa.visa_stamped %}
+                                <i class="fas fa-check-circle text-success"></i> Yes
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> No
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Ticket Issued:</th>
+                        <td>
+                            {% if visa.ticket_issued %}
+                                <i class="fas fa-check-circle text-success"></i> Yes
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> No
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+                {% else %}
+                <p class="text-muted">No visa process found</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- PAYMENT SUMMARY CARD -->
+        <div class="card shadow mb-4">
+            <div class="card-header" style="background: #28a745; color: white;">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Summary</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Initial Amount:</th>
+                        <td class="fw-bold">UGX {{ candidate.initial_amount|floatformat:0 }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Paid:</th>
+                        <td class="fw-bold text-success">
+                            UGX {{ total_paid|floatformat:0 }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Remaining Balance:</th>
+                        <td class="fw-bold {% if candidate.remaining_balance == 0 %}text-success{% else %}text-warning{% endif %}">
+                            UGX {{ candidate.remaining_balance|floatformat:0 }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Payment Plan:</th>
+                        <td>
+                            <span class="badge {% if candidate.payment_plan == 'cash' %}bg-success{% elif candidate.payment_plan == 'loan' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ candidate.get_payment_plan_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if candidate.fully_paid %}
+                                <span class="badge bg-success">Fully Paid</span>
+                                <small class="d-block text-muted">{{ candidate.fully_paid_date|date:"M d, Y" }}</small>
+                            {% else %}
+                                <span class="badge bg-warning">In Progress</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+                
+                <div class="mt-3">
+                    <label class="form-label fw-bold">Payment Progress</label>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ candidate.get_payment_progress }}%;" 
+                             aria-valuenow="{{ candidate.get_payment_progress }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ candidate.get_payment_progress }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <a href="{% url 'payment_add' %}?candidate={{ candidate.id }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus me-2"></i>Record Payment
+                    </a>
+                    <a href="{% url 'loan_payment_history' candidate.id %}" class="btn btn-info btn-sm">
+                        <i class="fas fa-history me-2"></i>Payment History
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Payments -->
+        <div class="card shadow mb-4">
+            <div class="card-header" style="background: #5EAAE1; color: white;">
+                <h5 class="mb-0">Recent Payments</h5>
+            </div>
+            <div class="card-body">
+                {% if payments %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Balance</th>
+                                <th>Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments|slice:":5" %}
+                            <tr>
+                                <td>{{ payment.date|date:"M d" }}</td>
+                                <td>{{ payment.get_payment_type_display|truncatechars:10 }}</td>
+                                <td class="text-success">UGX {{ payment.amount|floatformat:0 }}</td>
+                                <td class="{% if payment.new_balance == 0 %}text-success{% else %}text-warning{% endif %}">
+                                    UGX {{ payment.new_balance|floatformat:0 }}
+                                </td>
+                                <td>
+                                    <a href="{% url 'payment_receipt' payment.id %}" target="_blank">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if payments.count > 5 %}
+                <div class="text-center mt-2">
+                    <a href="{% url 'loan_payment_history' candidate.id %}" class="btn btn-sm btn-outline-primary">
+                        View All {{ payments.count }} Payments
+                    </a>
+                </div>
+                {% endif %}
+                {% else %}
+                <p class="text-muted">No payments recorded yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

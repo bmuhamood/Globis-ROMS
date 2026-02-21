@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-building me-2"></i>{{ client.company_name }}</h4>
+                <p class="text-muted small mb-0">{{ client.contact_person }} | {{ client.email }} | {{ client.phone }}</p>
+            </div>
+            <div>
+                <a href="{% url 'client_edit' client.id %}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit me-1"></i>Edit
+                </a>
+                <a href="{% url 'client_list' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header py-2" style="background: #0184FC; color: white;">
+                <h6 class="mb-0 small fw-bold"><i class="fas fa-info-circle me-2"></i>Client Information</h6>
+            </div>
+            <div class="card-body py-2">
+                <table class="table table-sm small mb-0">
+                    <tr>
+                        <th class="ps-0 py-1">Company:</th>
+                        <td class="pe-0 py-1">{{ client.company_name }}</td>
+                    </tr>
+                    <tr>
+                        <th class="ps-0 py-1">Contact Person:</th>
+                        <td class="pe-0 py-1">{{ client.contact_person }}</td>
+                    </tr>
+                    <tr>
+                        <th class="ps-0 py-1">Email:</th>
+                        <td class="pe-0 py-1">{{ client.email }}</td>
+                    </tr>
+                    <tr>
+                        <th class="ps-0 py-1">Phone:</th>
+                        <td class="pe-0 py-1">{{ client.phone }}</td>
+                    </tr>
+                    <tr>
+                        <th class="ps-0 py-1">Address:</th>
+                        <td class="pe-0 py-1">{{ client.address|linebreaks|truncatechars:50 }}</td>
+                    </tr>
+                    <tr>
+                        <th class="ps-0 py-1">Country:</th>
+                        <td class="pe-0 py-1">{{ client.country }}</td>
+                    </tr>
+                    <tr>
+                        <th class="ps-0 py-1">Joined:</th>
+                        <td class="pe-0 py-1">{{ client.created_at|date:"M d, Y" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header py-2" style="background: #28a745; color: white;">
+                <h6 class="mb-0 small fw-bold"><i class="fas fa-chart-pie me-2"></i>Statistics</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="p-2">
+                            <div class="small text-muted">Total Candidates</div>
+                            <h5 class="mb-0 fw-bold text-primary">{{ candidates|length }}</h5>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2">
+                            <div class="small text-muted">Total Placements</div>
+                            <h5 class="mb-0 fw-bold text-success">{{ placements|length }}</h5>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <div class="p-2 bg-light rounded">
+                            <div class="small text-muted">Total Revenue</div>
+                            <h5 class="mb-0 fw-bold text-success">UGX {{ total_revenue|floatformat:0 }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center" style="background: #00016E; color: white;">
+                <h6 class="mb-0 small fw-bold"><i class="fas fa-user-graduate me-2"></i>Candidates ({{ candidates|length }})</h6>
+                <a href="{% url 'candidate_list' %}?client={{ client.id }}" class="btn btn-light btn-sm py-0">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm small mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-1">Name</th>
+                                <th class="px-2 py-1">Passport</th>
+                                <th class="px-2 py-1">Position</th>
+                                <th class="px-2 py-1">Status</th>
+                                <th class="px-2 py-1">Payment</th>
+                                <th class="px-2 py-1">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for candidate in candidates|slice:":10" %}
+                            <tr>
+                                <td class="px-2 py-1">{{ candidate.full_name|truncatechars:20 }}</td>
+                                <td class="px-2 py-1">{{ candidate.passport_no }}</td>
+                                <td class="px-2 py-1">{{ candidate.position|truncatechars:15 }}</td>
+                                <td class="px-2 py-1">
+                                    {% if candidate.visa_process.visa_stamped %}
+                                        <span class="badge bg-success" style="font-size: 0.6rem;">Ready</span>
+                                    {% else %}
+                                        <span class="badge bg-warning" style="font-size: 0.6rem;">Processing</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 py-1">
+                                    {% if candidate.fully_paid %}
+                                        <span class="badge bg-success" style="font-size: 0.6rem;">Paid</span>
+                                    {% else %}
+                                        <span class="badge bg-warning" style="font-size: 0.6rem;">UGX {{ candidate.remaining_balance|floatformat:0 }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 py-1">
+                                    <a href="{% url 'candidate_detail' candidate.id %}" class="btn btn-outline-info py-0 px-1" style="font-size: 0.6rem;">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-3">
+                                    <p class="text-muted small mb-0">No candidates found for this client</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if candidates.count > 10 %}
+                <div class="text-center py-1 bg-light">
+                    <a href="{% url 'candidate_list' %}?client={{ client.id }}" class="small text-decoration-none">
+                        View all {{ candidates.count }} candidates
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header py-2" style="background: #5EAAE1; color: white;">
+                <h6 class="mb-0 small fw-bold"><i class="fas fa-briefcase me-2"></i>Recent Placements</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm small mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-1">Candidate</th>
+                                <th class="px-2 py-1">Date</th>
+                                <th class="px-2 py-1">Fee</th>
+                                <th class="px-2 py-1">Status</th>
+                                <th class="px-2 py-1">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for placement in placements|slice:":5" %}
+                            <tr>
+                                <td class="px-2 py-1">{{ placement.candidate.full_name|truncatechars:20 }}</td>
+                                <td class="px-2 py-1">{{ placement.date_placed|date:"m/d/y" }}</td>
+                                <td class="px-2 py-1 text-success fw-semibold">UGX {{ placement.placement_fee|floatformat:0 }}</td>
+                                <td class="px-2 py-1">
+                                    {% if placement.payment_status == 'paid' %}
+                                        <span class="badge bg-success" style="font-size: 0.6rem;">Paid</span>
+                                    {% elif placement.payment_status == 'partial' %}
+                                        <span class="badge bg-warning" style="font-size: 0.6rem;">Partial</span>
+                                    {% else %}
+                                        <span class="badge bg-danger" style="font-size: 0.6rem;">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 py-1">
+                                    <a href="{% url 'candidate_detail' placement.candidate.id %}" class="btn btn-outline-info py-0 px-1" style="font-size: 0.6rem;">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-3">
+                                    <p class="text-muted small mb-0">No placements found</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-header {
+        padding: 0.4rem 0.75rem;
+    }
+    .card-body {
+        padding: 0.75rem;
+    }
+    .table-sm th, .table-sm td {
+        padding: 0.25rem 0.3rem;
+        font-size: 0.75rem;
+    }
+    .btn-sm {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+    h4 {
+        font-size: 1.3rem;
+    }
+    h5 {
+        font-size: 1rem;
+    }
+    .small, small {
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}

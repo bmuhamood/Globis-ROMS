@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="text-secondary"><i class="fas fa-building me-2"></i>{{ client.company_name }}</h2>
+            <div>
+                <a href="{% url 'client_edit' client.id %}" class="btn btn-warning">
+                    <i class="fas fa-edit me-2"></i>Edit
+                </a>
+                <a href="{% url 'client_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card shadow mb-4">
+            <div class="card-header" style="background: #0184FC; color: white;">
+                <h5 class="mb-0">Client Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Contact Person:</th>
+                        <td>{{ client.contact_person }}</td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>{{ client.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Phone:</th>
+                        <td>{{ client.phone }}</td>
+                    </tr>
+                    <tr>
+                        <th>Address:</th>
+                        <td>{{ client.address|linebreaks }}</td>
+                    </tr>
+                    <tr>
+                        <th>Country:</th>
+                        <td>{{ client.country }}</td>
+                    </tr>
+                    <tr>
+                        <th>Joined:</th>
+                        <td>{{ client.created_at|date:"M d, Y" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header" style="background: #5EAAE1; color: white;">
+                <h5 class="mb-0">Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <h3 class="text-primary">{{ placements.count }}</h3>
+                    <p class="text-muted">Total Placements</p>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-success">UGX{{ total_revenue|floatformat:2 }}</h3>
+                    <p class="text-muted">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header" style="background: #00016E; color: white;">
+                <h5 class="mb-0">Placements</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Candidate</th>
+                                <th>Position</th>
+                                <th>Placement Date</th>
+                                <th>Fee</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for placement in placements %}
+                            <tr>
+                                <td>{{ placement.candidate.full_name }}</td>
+                                <td>{{ placement.candidate.position }}</td>
+                                <td>{{ placement.date_placed|date:"M d, Y" }}</td>
+                                <td>UGX{{ placement.placement_fee }}</td>
+                                <td>
+                                    {% if placement.payment_status == 'paid' %}
+                                        <span class="badge bg-success">Paid</span>
+                                    {% elif placement.payment_status == 'partial' %}
+                                        <span class="badge bg-warning">Partial</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Pending</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No placements found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="text-secondary"><i class="fas fa-chart-line me-2"></i>Finance Dashboard</h2>
+        <p class="text-muted">Track your income, expenses, and cash flow</p>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mt-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Cash In Hand</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">UGX{{ cash_in_hand|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Income</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">UGX{{ total_income|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-arrow-down fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Total Expenses</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">UGX{{ total_expenses|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-arrow-up fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Net Profit/Loss</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            UGX{{ total_income|add:total_expenses|floatformat:2 }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-pie fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Transactions -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header" style="background: #28a745; color: white;">
+                <h5 class="mb-0">Today's Income</h5>
+            </div>
+            <div class="card-body">
+                <h3 class="text-success">UGX{{ today_income|floatformat:2 }}</h3>
+                <p class="text-muted mb-0">{% now "F j, Y" %}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header" style="background: #dc3545; color: white;">
+                <h5 class="mb-0">Today's Expenses</h5>
+            </div>
+            <div class="card-body">
+                <h3 class="text-danger">UGX{{ today_expenses|floatformat:2 }}</h3>
+                <p class="text-muted mb-0">{% now "F j, Y" %}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Summary -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header" style="background: #0184FC; color: white;">
+                <h5 class="mb-0">Monthly Income (Last 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                <h3 class="text-primary">UGX{{ monthly_income|floatformat:2 }}</h3>
+                <a href="{% url 'income_list' %}" class="btn btn-sm btn-outline-primary mt-2">
+                    <i class="fas fa-list me-2"></i>View All Income
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header" style="background: #5EAAE1; color: white;">
+                <h5 class="mb-0">Monthly Expenses (Last 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                <h3 class="text-info">UGX{{ monthly_expenses|floatformat:2 }}</h3>
+                <a href="{% url 'expense_list' %}" class="btn btn-sm btn-outline-info mt-2">
+                    <i class="fas fa-list me-2"></i>View All Expenses
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header" style="background: #28a745; color: white;">
+                <h5 class="mb-0">Recent Income</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Client</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for income in recent_income %}
+                            <tr>
+                                <td>{{ income.date|date:"M d" }}</td>
+                                <td>{{ income.client.company_name|truncatechars:20 }}</td>
+                                <td class="text-success fw-bold">UGX{{ income.amount }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">No recent income</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="{% url 'income_list' %}" class="btn btn-sm btn-success mt-2">
+                    <i class="fas fa-plus me-2"></i>Add Income
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header" style="background: #dc3545; color: white;">
+                <h5 class="mb-0">Recent Expenses</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in recent_expenses %}
+                            <tr>
+                                <td>{{ expense.date|date:"M d" }}</td>
+                                <td>{{ expense.category|title }}</td>
+                                <td class="text-danger fw-bold">UGX{{ expense.amount }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">No recent expenses</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="{% url 'expense_add' %}" class="btn btn-sm btn-danger mt-2">
+                    <i class="fas fa-plus me-2"></i>Add Expense
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header" style="background: #00016E; color: white;">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{% url 'income_add' %}" class="btn btn-outline-success w-100 mb-2">
+                            <i class="fas fa-plus-circle me-2"></i>Add Income
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'expense_add' %}" class="btn btn-outline-danger w-100 mb-2">
+                            <i class="fas fa-minus-circle me-2"></i>Add Expense
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'income_list' %}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-list me-2"></i>View All Income
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'expense_list' %}" class="btn btn-outline-info w-100 mb-2">
+                            <i class="fas fa-list me-2"></i>View All Expenses
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

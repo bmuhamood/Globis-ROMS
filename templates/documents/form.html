@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="text-secondary">
+            <i class="fas fa-file-alt me-2"></i>
+            Update Documents - {{ document.candidate.full_name }}
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header" style="background: linear-gradient(135deg, #0184FC, #00016E); color: white;">
+                <h5 class="mb-0">Document Status</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="medical_report" name="medical_report" {% if document.medical_report %}checked{% endif %}>
+                                <label class="form-check-label" for="medical_report">Medical Report</label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="interpol" name="interpol" {% if document.interpol %}checked{% endif %}>
+                                <label class="form-check-label" for="interpol">Interpol Clearance</label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="passport_copy" name="passport_copy" {% if document.passport_copy %}checked{% endif %}>
+                                <label class="form-check-label" for="passport_copy">Passport Copy</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="passport_photo" name="passport_photo" {% if document.passport_photo %}checked{% endif %}>
+                                <label class="form-check-label" for="passport_photo">Passport Photo</label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="offer_letter" name="offer_letter" {% if document.offer_letter %}checked{% endif %}>
+                                <label class="form-check-label" for="offer_letter">Offer Letter</label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="mol_approval" name="mol_approval" {% if document.mol_approval %}checked{% endif %}>
+                                <label class="form-check-label" for="mol_approval">MOL Approval Received & Signed</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end mt-4">
+                        <a href="{% url 'document_list' %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Documents
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

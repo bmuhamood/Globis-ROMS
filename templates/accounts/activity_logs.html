@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-history me-2"></i>Activity Logs</h4>
+                <p class="text-muted small mb-0">Track all user activities in the system</p>
+            </div>
+            <div>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportTableToExcel()">
+                    <i class="fas fa-file-excel me-1"></i>Export
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.location.reload()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mt-3">
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Total Logs</div>
+                        <div class="h4 fw-bold mb-0">{{ page_obj.paginator.count }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-history text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Creates</div>
+                        <div class="h4 fw-bold mb-0">{{ create_count|default:"0" }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-plus-circle text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">Updates</div>
+                        <div class="h4 fw-bold mb-0">{{ update_count|default:"0" }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-edit text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-danger border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-danger text-uppercase mb-0">Deletes</div>
+                        <div class="h4 fw-bold mb-0">{{ delete_count|default:"0" }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-danger bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-trash-alt text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters - Compact -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-filter me-2"></i>Filter Logs</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2">
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Action</label>
+                        <select name="action" class="form-select form-select-sm">
+                            <option value="">All</option>
+                            {% for value, label in actions %}
+                            <option value="{{ value }}" {% if request.GET.action == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Model</label>
+                        <select name="model" class="form-select form-select-sm">
+                            <option value="">All</option>
+                            {% for value, label in models %}
+                            <option value="{{ value }}" {% if request.GET.model == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">User</label>
+                        <select name="user" class="form-select form-select-sm">
+                            <option value="">All</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if request.GET.user == user.id|stringformat:'i' %}selected{% endif %}>{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">From Date</label>
+                        <input type="date" name="from" class="form-control form-control-sm" value="{{ request.GET.from }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">To Date</label>
+                        <input type="date" name="to" class="form-control form-control-sm" value="{{ request.GET.to }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end gap-1">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-filter me-1"></i>Apply
+                        </button>
+                        <a href="{% url 'activity_logs' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Filter Tabs -->
+<div class="row mt-2">
+    <div class="col-12">
+        <ul class="nav nav-pills nav-fill bg-light rounded p-1 small">
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if not request.GET.action and not request.GET.model %}active{% endif %}" href="{% url 'activity_logs' %}">
+                    <i class="fas fa-list me-1"></i>All
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if request.GET.action == 'CREATE' %}active{% endif %}" href="?action=CREATE">
+                    <i class="fas fa-plus-circle me-1 text-success"></i>Creates
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if request.GET.action == 'UPDATE' %}active{% endif %}" href="?action=UPDATE">
+                    <i class="fas fa-edit me-1 text-warning"></i>Updates
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if request.GET.action == 'DELETE' %}active{% endif %}" href="?action=DELETE">
+                    <i class="fas fa-trash-alt me-1 text-danger"></i>Deletes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if request.GET.action == 'LOGIN' %}active{% endif %}" href="?action=LOGIN">
+                    <i class="fas fa-sign-in-alt me-1 text-info"></i>Logins
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if request.GET.model == 'Candidate' %}active{% endif %}" href="?model=Candidate">
+                    <i class="fas fa-user-graduate me-1 text-primary"></i>Candidates
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small"><i class="fas fa-list me-2 text-primary"></i>Activity Logs</h6>
+                <span class="badge bg-primary">{{ page_obj.paginator.count }} Total</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small" id="logsTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2" onclick="sortTable(0)">Timestamp <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2" onclick="sortTable(1)">User <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2">Action</th>
+                                <th class="px-2 py-2" onclick="sortTable(3)">Model <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2">Object</th>
+                                <th class="px-2 py-2">Details</th>
+                                <th class="px-2 py-2">IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in page_obj %}
+                            <tr>
+                                <td class="px-2">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                                <td class="px-2">
+                                    <span class="fw-semibold">{{ log.username }}</span>
+                                    {% if log.user %}
+                                    <br><small class="text-muted">ID: {{ log.user.id }}</small>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2">
+                                    <span class="badge {% if log.action == 'CREATE' %}bg-success{% elif log.action == 'UPDATE' %}bg-warning{% elif log.action == 'DELETE' %}bg-danger{% elif log.action == 'LOGIN' %}bg-info{% elif log.action == 'LOGOUT' %}bg-secondary{% else %}bg-primary{% endif %} px-2 py-1" style="font-size: 0.65rem;">
+                                        {{ log.get_action_display }}
+                                    </span>
+                                </td>
+                                <td class="px-2">
+                                    <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.65rem;">
+                                        {{ log.get_model_type_display }}
+                                    </span>
+                                </td>
+                                <td class="px-2">
+                                    {% if log.object_repr %}
+                                    <span class="font-monospace small">{{ log.object_repr|truncatechars:25 }}</span>
+                                    <br><small class="text-muted">ID: {{ log.object_id|default:"-" }}</small>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2">
+                                    {% if log.details %}
+                                    <span data-bs-toggle="tooltip" title="{{ log.details }}">
+                                        {{ log.details|truncatechars:40 }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2">
+                                    {% if log.ip_address %}
+                                    <code>{{ log.ip_address }}</code>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No activity logs found</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pagination - Compact -->
+            {% if page_obj.has_other_pages %}
+            <div class="card-footer bg-white py-2">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_obj.number }}</span>
+                        </li>
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                <p class="text-center text-muted small mt-2 mb-0">
+                    Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} records
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    
+    // Sort table function
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById('logsTable');
+        if (!table) return;
+        
+        switching = true;
+        dir = 'asc';
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName('TD')[n];
+                y = rows[i + 1].getElementsByTagName('TD')[n];
+                
+                if (x && y) {
+                    let xVal = x.textContent.toLowerCase();
+                    let yVal = y.textContent.toLowerCase();
+                    
+                    if (dir == 'asc') {
+                        if (xVal > yVal) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == 'desc') {
+                        if (xVal < yVal) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == 'asc') {
+                    dir = 'desc';
+                    switching = true;
+                }
+            }
+        }
+    }
+    
+    // Export to Excel
+    function exportTableToExcel() {
+        var table = document.getElementById('logsTable');
+        var html = table.outerHTML;
+        var url = 'data:application/vnd.ms-excel,' + escape(html);
+        var link = document.createElement('a');
+        link.download = 'activity_logs.xls';
+        link.href = url;
+        link.click();
+    }
+</script>
+{% endblock %}
+
+<style>
+    @media print {
+        .btn, .nav-pills, form {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: black !important;
+        }
+    }
+    
+    .table > :not(caption) > * > * {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h4 {
+        font-size: 1.2rem;
+    }
+    .small, .form-label {
+        font-size: 0.7rem;
+    }
+    .form-select-sm, .form-control-sm {
+        font-size: 0.75rem;
+    }
+    .badge {
+        font-weight: 500;
+        font-size: 0.65rem;
+    }
+    h4 {
+        font-size: 1.3rem;
+    }
+    .nav-pills .nav-link {
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+    }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #0184FC, #00016E);
+    }
+    .pagination-sm .page-link {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.7rem;
+    }
+</style>

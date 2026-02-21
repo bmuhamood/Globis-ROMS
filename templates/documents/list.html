@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-file-alt me-2"></i>Document Status</h4>
+                <p class="text-muted small mb-0">Track candidate document status</p>
+            </div>
+            <a href="{% url 'missing_documents' %}" class="btn btn-warning btn-sm">
+                <i class="fas fa-exclamation-triangle me-2"></i>Missing Documents
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards - Smaller -->
+<div class="row mt-3">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white shadow-sm">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 small fw-light">Total Documents</h6>
+                        <h5 class="mb-0 fw-bold">{{ documents|length }}</h5>
+                    </div>
+                    <i class="fas fa-file-alt fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white shadow-sm">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 small fw-light">Complete</h6>
+                        <h5 class="mb-0 fw-bold">{{ complete_count|default:"0" }}</h5>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white shadow-sm">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 small fw-light">Missing 1-2</h6>
+                        <h5 class="mb-0 fw-bold">{{ partial_count|default:"0" }}</h5>
+                    </div>
+                    <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-danger text-white shadow-sm">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 small fw-light">Missing 3+</h6>
+                        <h5 class="mb-0 fw-bold">{{ critical_count|default:"0" }}</h5>
+                    </div>
+                    <i class="fas fa-times-circle fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Section - Compact -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-search me-2"></i>Search & Filters</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2">
+                    <!-- Search by candidate name or passport -->
+                    <div class="col-md-4">
+                        <label class="form-label small mb-0">Search Candidate</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" class="form-control form-control-sm" name="search" placeholder="Name or Passport..." value="{{ search_query }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Filter by document status -->
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Medical</label>
+                        <select class="form-select form-select-sm" name="medical">
+                            <option value="">All</option>
+                            <option value="yes" {% if medical_filter == 'yes' %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if medical_filter == 'no' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Interpol</label>
+                        <select class="form-select form-select-sm" name="interpol">
+                            <option value="">All</option>
+                            <option value="yes" {% if interpol_filter == 'yes' %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if interpol_filter == 'no' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Passport Copy</label>
+                        <select class="form-select form-select-sm" name="passport_copy">
+                            <option value="">All</option>
+                            <option value="yes" {% if passport_copy_filter == 'yes' %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if passport_copy_filter == 'no' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Passport Photo</label>
+                        <select class="form-select form-select-sm" name="passport_photo">
+                            <option value="">All</option>
+                            <option value="yes" {% if passport_photo_filter == 'yes' %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if passport_photo_filter == 'no' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Offer Letter</label>
+                        <select class="form-select form-select-sm" name="offer_letter">
+                            <option value="">All</option>
+                            <option value="yes" {% if offer_letter_filter == 'yes' %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if offer_letter_filter == 'no' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">MOL Approval</label>
+                        <select class="form-select form-select-sm" name="mol_approval">
+                            <option value="">All</option>
+                            <option value="yes" {% if mol_approval_filter == 'yes' %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if mol_approval_filter == 'no' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filter by missing count -->
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Missing</label>
+                        <select class="form-select form-select-sm" name="missing">
+                            <option value="">All</option>
+                            <option value="0" {% if missing_filter == '0' %}selected{% endif %}>0 Missing</option>
+                            <option value="1" {% if missing_filter == '1' %}selected{% endif %}>1 Missing</option>
+                            <option value="2" {% if missing_filter == '2' %}selected{% endif %}>2 Missing</option>
+                            <option value="3+" {% if missing_filter == '3+' %}selected{% endif %}>3+ Missing</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filter by agent -->
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Agent</label>
+                        <select class="form-select form-select-sm" name="agent">
+                            <option value="">All Agents</option>
+                            {% for agent in agents %}
+                            <option value="{{ agent.id }}" {% if agent_filter == agent.id|stringformat:'i' %}selected{% endif %}>{{ agent.name|truncatechars:15 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Filter by client -->
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Client</label>
+                        <select class="form-select form-select-sm" name="client">
+                            <option value="">All Clients</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}" {% if client_filter == client.id|stringformat:'i' %}selected{% endif %}>{{ client.company_name|truncatechars:15 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Date range filter -->
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">From Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_from" value="{{ date_from }}">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">To Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_to" value="{{ date_to }}">
+                    </div>
+                    
+                    <!-- Action buttons -->
+                    <div class="col-12 text-end mt-2">
+                        <button type="submit" class="btn btn-primary btn-sm px-3">
+                            <i class="fas fa-filter me-1"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'document_list' %}" class="btn btn-secondary btn-sm px-3">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                        <button type="button" class="btn btn-info btn-sm" onclick="exportTableToExcel()">
+                            <i class="fas fa-file-excel me-1"></i>Export
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Filter Tabs - Smaller -->
+<div class="row mt-3">
+    <div class="col-12">
+        <ul class="nav nav-pills nav-fill bg-light rounded p-1 small">
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if not filter_type %}active{% endif %}" href="{% url 'document_list' %}">
+                    <i class="fas fa-list me-1"></i>All
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'complete' %}active{% endif %}" href="?complete=yes">
+                    <i class="fas fa-check-circle me-1"></i>Complete
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'missing' %}active{% endif %}" href="{% url 'missing_documents' %}">
+                    <i class="fas fa-exclamation-triangle me-1"></i>Missing
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'medical' %}active{% endif %}" href="?medical=no">
+                    <i class="fas fa-file-medical me-1"></i>No Medical
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'interpol' %}active{% endif %}" href="?interpol=no">
+                    <i class="fas fa-fingerprint me-1"></i>No Interpol
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'mol' %}active{% endif %}" href="?mol_approval=no">
+                    <i class="fas fa-file-signature me-1"></i>No MOL
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Documents Table - Smaller Text -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small">Document Status List</h6>
+                <span class="badge bg-primary">{{ documents|length }} Records</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small" id="documentsTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2" onclick="sortTable(0)">Candidate <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-center" onclick="sortTable(1)">Medical <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-center" onclick="sortTable(2)">Interpol <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-center" onclick="sortTable(3)">Pass Copy <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-center" onclick="sortTable(4)">Pass Photo <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-center" onclick="sortTable(5)">Offer Ltr <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-center" onclick="sortTable(6)">MOL <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-center">Missing</th>
+                                <th class="px-2 py-2 text-center">Updated</th>
+                                <th class="px-2 py-2 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documents %}
+                            <tr class="{% if doc.missing_documents_count > 2 %}table-danger{% elif doc.missing_documents_count > 0 %}table-warning{% endif %}">
+                                <td class="px-2">
+                                    <a href="{% url 'candidate_detail' doc.candidate.id %}" class="text-decoration-none fw-semibold small">
+                                        {{ doc.candidate.full_name|truncatechars:20 }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ doc.candidate.passport_no|truncatechars:12 }}</small>
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if doc.medical_report %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.7rem;">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-danger px-2 py-1" style="font-size: 0.7rem;">No</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if doc.interpol %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.7rem;">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-danger px-2 py-1" style="font-size: 0.7rem;">No</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if doc.passport_copy %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.7rem;">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-danger px-2 py-1" style="font-size: 0.7rem;">No</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if doc.passport_photo %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.7rem;">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-danger px-2 py-1" style="font-size: 0.7rem;">No</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if doc.offer_letter %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.7rem;">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-danger px-2 py-1" style="font-size: 0.7rem;">No</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if doc.mol_approval %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.7rem;">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-danger px-2 py-1" style="font-size: 0.7rem;">No</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    <span class="badge {% if doc.missing_documents_count > 0 %}bg-danger{% else %}bg-success{% endif %} px-2 py-1" style="font-size: 0.7rem;">
+                                        {{ doc.missing_documents_count }}
+                                    </span>
+                                </td>
+                                <td class="px-2 text-center">
+                                    <small>{{ doc.updated_at|date:"m/d/y" }}</small>
+                                </td>
+                                <td class="px-2 text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'document_update' doc.id %}" class="btn btn-outline-primary" title="Update">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'candidate_detail' doc.candidate.id %}" class="btn btn-outline-info" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center py-4">
+                                    <i class="fas fa-file-alt fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No documents found</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pagination - Smaller -->
+            {% if documents.has_other_pages %}
+            <div class="card-footer bg-white py-2">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if documents.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;&laquo;</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ documents.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active"><span class="page-link">{{ documents.number }}</span></li>
+                        
+                        {% if documents.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ documents.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ documents.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;&raquo;</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function exportTableToExcel() {
+        var table = document.getElementById('documentsTable');
+        var html = table.outerHTML;
+        var url = 'data:application/vnd.ms-excel,' + escape(html);
+        var link = document.createElement('a');
+        link.download = 'document_status_report.xls';
+        link.href = url;
+        link.click();
+    }
+    
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById('documentsTable');
+        switching = true;
+        dir = 'asc';
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName('TD')[n];
+                y = rows[i + 1].getElementsByTagName('TD')[n];
+                
+                if (dir == 'asc') {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == 'desc') {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == 'asc') {
+                    dir = 'desc';
+                    switching = true;
+                }
+            }
+        }
+    }
+</script>
+
+<style>
+    .table > :not(caption) > * > * {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .btn-group-sm .btn {
+        padding: 0.15rem 0.25rem;
+        font-size: 0.65rem;
+    }
+    .nav-pills .nav-link {
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+    }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #0184FC, #00016E);
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h5 {
+        font-size: 1rem;
+    }
+    .h6 {
+        font-size: 0.8rem;
+    }
+    .small, .form-label {
+        font-size: 0.7rem;
+    }
+    .form-select-sm, .input-group-sm, .form-control-sm {
+        font-size: 0.75rem;
+    }
+    .badge {
+        font-weight: 500;
+        font-size: 0.65rem;
+    }
+    .btn-sm {
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}

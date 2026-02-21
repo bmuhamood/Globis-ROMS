@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-briefcase me-2"></i>Placements</h4>
+                <p class="text-muted small mb-0">Track candidate placements with clients</p>
+            </div>
+            <a href="{% url 'placement_add' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-1"></i>New Placement
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mt-3">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Total Placements</div>
+                        <div class="h5 fw-bold mb-0">{{ placements|length }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-briefcase text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Total Fees</div>
+                        <div class="h5 fw-bold mb-0">UGX {{ total_fees|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-money-bill-wave text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">Pending</div>
+                        <div class="h5 fw-bold mb-0">{{ pending_count|default:"0" }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-clock text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-info text-uppercase mb-0">Avg. Fee</div>
+                        <div class="h5 fw-bold mb-0">UGX {{ avg_fee|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-info bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-chart-line text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-search me-2"></i>Search & Filters</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Search</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" class="form-control form-control-sm" name="search" placeholder="Candidate or Client..." value="{{ search_query }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Payment Status</label>
+                        <select class="form-select form-select-sm" name="status">
+                            <option value="">All</option>
+                            <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                            <option value="partial" {% if status_filter == 'partial' %}selected{% endif %}>Partial</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Client</label>
+                        <select class="form-select form-select-sm" name="client">
+                            <option value="">All Clients</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}" {% if client_filter == client.id|stringformat:'i' %}selected{% endif %}>{{ client.company_name|truncatechars:20 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">From Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_from" value="{{ date_from }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">To Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_to" value="{{ date_to }}">
+                    </div>
+                    
+                    <div class="col-md-1">
+                        <label class="form-label small mb-0">Min Fee</label>
+                        <input type="number" class="form-control form-control-sm" name="min_fee" placeholder="UGX" value="{{ min_fee }}" step="1000">
+                    </div>
+                    
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary btn-sm px-3">
+                            <i class="fas fa-filter me-1"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'placement_list' %}" class="btn btn-outline-secondary btn-sm px-3">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="exportTableToExcel()">
+                            <i class="fas fa-file-excel me-1"></i>Export
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Tabs -->
+<div class="row mt-3">
+    <div class="col-12">
+        <ul class="nav nav-pills nav-fill bg-light rounded p-1 small">
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if not status_filter %}active{% endif %}" href="{% url 'placement_list' %}">
+                    <i class="fas fa-list me-1"></i>All
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if status_filter == 'paid' %}active{% endif %}" href="?status=paid">
+                    <i class="fas fa-check-circle me-1 text-success"></i>Paid
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if status_filter == 'partial' %}active{% endif %}" href="?status=partial">
+                    <i class="fas fa-adjust me-1 text-warning"></i>Partial
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if status_filter == 'pending' %}active{% endif %}" href="?status=pending">
+                    <i class="fas fa-hourglass-half me-1 text-danger"></i>Pending
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if date_filter == 'month' %}active{% endif %}" href="?date_from={{ current_month_start }}&date_to={{ current_month_end }}">
+                    <i class="fas fa-calendar me-1"></i>This Month
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Placements Table -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small">Placement List</h6>
+                <span class="badge bg-primary">{{ placements|length }} Records</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small" id="placementsTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2" onclick="sortTable(0)">Candidate <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2" onclick="sortTable(1)">Client <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-center" onclick="sortTable(2)">Date <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-end" onclick="sortTable(3)">Fee <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-center">Status</th>
+                                <th class="px-2 py-2 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for placement in placements %}
+                            <tr>
+                                <td class="px-2">
+                                    <a href="{% url 'candidate_detail' placement.candidate.id %}" class="text-decoration-none fw-semibold">
+                                        {{ placement.candidate.full_name|truncatechars:20 }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ placement.candidate.passport_no|truncatechars:12 }}</small>
+                                </td>
+                                <td class="px-2">
+                                    <a href="{% url 'client_detail' placement.client.id %}" class="text-decoration-none">
+                                        {{ placement.client.company_name|truncatechars:20 }}
+                                    </a>
+                                </td>
+                                <td class="px-2 text-center">{{ placement.date_placed|date:"m/d/y" }}</td>
+                                <td class="px-2 text-end fw-bold text-success">UGX {{ placement.placement_fee|floatformat:0 }}</td>
+                                <td class="px-2 text-center">
+                                    {% if placement.payment_status == 'paid' %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.65rem;">Paid</span>
+                                    {% elif placement.payment_status == 'partial' %}
+                                        <span class="badge bg-warning px-2 py-1" style="font-size: 0.65rem;">Partial</span>
+                                    {% else %}
+                                        <span class="badge bg-danger px-2 py-1" style="font-size: 0.65rem;">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'placement_edit' placement.id %}" class="btn btn-outline-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'placement_delete' placement.id %}" class="btn btn-outline-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this placement?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                        <a href="{% url 'candidate_detail' placement.candidate.id %}" class="btn btn-outline-info" title="View Candidate">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="fas fa-briefcase fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-2">No placements found</p>
+                                    <a href="{% url 'placement_add' %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus me-1"></i>New Placement
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            {% if placements.has_other_pages %}
+            <div class="card-footer bg-white py-2">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if placements.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;&laquo;</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ placements.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active"><span class="page-link">{{ placements.number }}</span></li>
+                        
+                        {% if placements.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ placements.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ placements.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;&raquo;</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function exportTableToExcel() {
+        var table = document.getElementById('placementsTable');
+        var html = table.outerHTML;
+        var url = 'data:application/vnd.ms-excel,' + escape(html);
+        var link = document.createElement('a');
+        link.download = 'placements_list.xls';
+        link.href = url;
+        link.click();
+    }
+    
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById('placementsTable');
+        switching = true;
+        dir = 'asc';
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName('TD')[n];
+                y = rows[i + 1].getElementsByTagName('TD')[n];
+                
+                if (dir == 'asc') {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == 'desc') {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == 'asc') {
+                    dir = 'desc';
+                    switching = true;
+                }
+            }
+        }
+    }
+</script>
+
+<style>
+    .table > :not(caption) > * > * {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .btn-group-sm .btn {
+        padding: 0.15rem 0.25rem;
+        font-size: 0.65rem;
+    }
+    .nav-pills .nav-link {
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+    }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #0184FC, #00016E);
+    }
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h5 {
+        font-size: 1rem;
+    }
+    .small, .form-label {
+        font-size: 0.7rem;
+    }
+    .form-select-sm, .input-group-sm, .form-control-sm {
+        font-size: 0.75rem;
+    }
+    .badge {
+        font-weight: 500;
+        font-size: 0.65rem;
+    }
+    .btn-sm {
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}

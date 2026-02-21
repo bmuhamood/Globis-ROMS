@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-handshake me-2"></i>{{ report_type }}</h4>
+                <p class="text-muted small mb-0">Generated on {% now "F j, Y" %} at {% now "H:i" %}</p>
+            </div>
+            <div>
+                <button onclick="window.print()" class="btn btn-primary btn-sm">
+                    <i class="fas fa-print me-1"></i>Print
+                </button>
+                <a href="{% url 'report_list' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mt-3">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Total Agents</div>
+                        <div class="h5 fw-bold mb-0">{{ agents|length }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-handshake text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Total Payments</div>
+                        <div class="h5 fw-bold mb-0">UGX {{ total_payments_all|default:"0"|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-money-bill-wave text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-info text-uppercase mb-0">Total Candidates</div>
+                        <div class="h5 fw-bold mb-0">{{ total_candidates_all|default:"0" }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-info bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-users text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">Avg Commission</div>
+                        <div class="h5 fw-bold mb-0">{{ avg_commission|default:"0" }}%</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-percent text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section (only visible on screen, hidden when printing) -->
+<div class="row mt-2 d-print-none">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-filter me-2"></i>Filter Report</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Search</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" class="form-control form-control-sm" name="search" placeholder="Agent name..." value="{{ search_query }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Min Commission</label>
+                        <select class="form-select form-select-sm" name="min_commission">
+                            <option value="">Any</option>
+                            <option value="0" {% if min_commission == '0' %}selected{% endif %}>0%+</option>
+                            <option value="5" {% if min_commission == '5' %}selected{% endif %}>5%+</option>
+                            <option value="10" {% if min_commission == '10' %}selected{% endif %}>10%+</option>
+                            <option value="15" {% if min_commission == '15' %}selected{% endif %}>15%+</option>
+                            <option value="20" {% if min_commission == '20' %}selected{% endif %}>20%+</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Max Commission</label>
+                        <select class="form-select form-select-sm" name="max_commission">
+                            <option value="">Any</option>
+                            <option value="5" {% if max_commission == '5' %}selected{% endif %}>Up to 5%</option>
+                            <option value="10" {% if max_commission == '10' %}selected{% endif %}>Up to 10%</option>
+                            <option value="15" {% if max_commission == '15' %}selected{% endif %}>Up to 15%</option>
+                            <option value="20" {% if max_commission == '20' %}selected{% endif %}>Up to 20%</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">Min Candidates</label>
+                        <input type="number" class="form-control form-control-sm" name="min_candidates" placeholder="0" value="{{ min_candidates }}" min="0">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Has Candidates</label>
+                        <select class="form-select form-select-sm" name="has_candidates">
+                            <option value="">All</option>
+                            <option value="yes" {% if has_candidates == 'yes' %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if has_candidates == 'no' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary btn-sm px-3">
+                            <i class="fas fa-filter me-1"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'agent_report' %}" class="btn btn-outline-secondary btn-sm px-3">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Filter Tabs -->
+<div class="row mt-2 d-print-none">
+    <div class="col-12">
+        <ul class="nav nav-pills nav-fill bg-light rounded p-1 small">
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if not filter_type %}active{% endif %}" href="{% url 'agent_report' %}">
+                    <i class="fas fa-list me-1"></i>All Agents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'high' %}active{% endif %}" href="?min_commission=15">
+                    <i class="fas fa-star me-1"></i>High Commission (15%+)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'active' %}active{% endif %}" href="?has_candidates=yes">
+                    <i class="fas fa-user-check me-1"></i>With Candidates
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'top' %}active{% endif %}" href="?min_candidates=5">
+                    <i class="fas fa-trophy me-1"></i>Top Agents (5+)
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Agent Summary Table -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small">Agent Summary</h6>
+                <span class="badge bg-primary">{{ agents|length }} Records</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small" id="agentsTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2">#</th>
+                                <th class="px-2 py-2" onclick="sortTable(1)">Agent Name <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2" onclick="sortTable(2)">Email <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2">Phone</th>
+                                <th class="px-2 py-2 text-center" onclick="sortTable(4)">Commission <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-center">Candidates</th>
+                                <th class="px-2 py-2 text-end">Total Payments</th>
+                                <th class="px-2 py-2 text-end">Est. Commission</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for agent in agents %}
+                            <tr>
+                                <td class="px-2">{{ forloop.counter }}</td>
+                                <td class="px-2 fw-semibold">{{ agent.name|truncatechars:25 }}</td>
+                                <td class="px-2">{{ agent.email|truncatechars:20 }}</td>
+                                <td class="px-2">{{ agent.phone }}</td>
+                                <td class="px-2 text-center">
+                                    <span class="badge {% if agent.commission_rate >= 15 %}bg-success{% elif agent.commission_rate >= 10 %}bg-info{% elif agent.commission_rate >= 5 %}bg-warning{% else %}bg-secondary{% endif %} px-2 py-1" style="font-size: 0.65rem;">
+                                        {{ agent.commission_rate }}%
+                                    </span>
+                                </td>
+                                <td class="px-2 text-center">
+                                    <span class="badge bg-primary rounded-pill">{{ agent.candidate_count|default:"0" }}</span>
+                                </td>
+                                <td class="px-2 text-end text-success fw-semibold">
+                                    UGX {{ agent.total_payments|default:"0"|floatformat:0 }}
+                                </td>
+                                <td class="px-2 text-end text-primary fw-semibold">
+                                    UGX {% widthratio agent.commission_rate 100 agent.total_payments|default:0 %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-handshake fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No agents found</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Footer (only visible when printing) -->
+<div class="d-none d-print-block mt-5">
+    <hr>
+    <div class="row">
+        <div class="col-6">
+            <p class="small text-muted">Generated by: {{ user.get_full_name|default:user.username }}</p>
+        </div>
+        <div class="col-6 text-end">
+            <p class="small text-muted">Page <span class="page-number"></span></p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById('agentsTable');
+        if (!table) return;
+        
+        switching = true;
+        dir = 'asc';
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName('TD')[n];
+                y = rows[i + 1].getElementsByTagName('TD')[n];
+                
+                if (x && y) {
+                    if (dir == 'asc') {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == 'desc') {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == 'asc') {
+                    dir = 'desc';
+                    switching = true;
+                }
+            }
+        }
+    }
+    
+    // Add print optimization
+    window.onbeforeprint = function() {
+        var table = document.getElementById('agentsTable');
+        if (table) {
+            table.style.width = '100%';
+        }
+    };
+</script>
+{% endblock %}
+
+<style>
+    @media print {
+        .d-print-none {
+            display: none !important;
+        }
+        .d-print-block {
+            display: block !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: black !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .badge {
+            border: 1px solid #000 !important;
+            color: black !important;
+            background-color: transparent !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+    
+    .table > :not(caption) > * > * {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h5 {
+        font-size: 1rem;
+    }
+    .small, .form-label {
+        font-size: 0.7rem;
+    }
+    .form-select-sm, .form-control-sm {
+        font-size: 0.75rem;
+    }
+    .badge {
+        font-weight: 500;
+        font-size: 0.65rem;
+    }
+    h4 {
+        font-size: 1.3rem;
+    }
+</style>

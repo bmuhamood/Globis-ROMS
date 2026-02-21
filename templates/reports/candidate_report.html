@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-user-graduate me-2"></i>{{ report_type }}</h4>
+                <p class="text-muted small mb-0">Generated on {% now "F j, Y" %} at {% now "H:i" %}</p>
+            </div>
+            <div>
+                <button onclick="window.print()" class="btn btn-primary btn-sm">
+                    <i class="fas fa-print me-1"></i>Print
+                </button>
+                <a href="{% url 'report_list' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mt-3">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Total Candidates</div>
+                        <div class="h5 fw-bold mb-0">{{ candidates|length }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-users text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Total Payments</div>
+                        <div class="h5 fw-bold mb-0">UGX {{ total_payments|default:"0"|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-money-bill-wave text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-info text-uppercase mb-0">With Agents</div>
+                        <div class="h5 fw-bold mb-0">{{ with_agents|default:"0" }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-info bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-handshake text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">With Clients</div>
+                        <div class="h5 fw-bold mb-0">{{ with_clients|default:"0" }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-building text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section (only visible on screen, hidden when printing) -->
+<div class="row mt-2 d-print-none">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-filter me-2"></i>Filter Report</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Agent</label>
+                        <select class="form-select form-select-sm" name="agent">
+                            <option value="">All Agents</option>
+                            {% for agent in agents %}
+                            <option value="{{ agent.id }}" {% if agent_filter == agent.id|stringformat:'i' %}selected{% endif %}>{{ agent.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Client</label>
+                        <select class="form-select form-select-sm" name="client">
+                            <option value="">All Clients</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}" {% if client_filter == client.id|stringformat:'i' %}selected{% endif %}>{{ client.company_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">From Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_from" value="{{ date_from }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0">To Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_to" value="{{ date_to }}">
+                    </div>
+                    
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-filter me-1"></i>Apply
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Candidates Table -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small">Candidate List</h6>
+                <span class="badge bg-primary">{{ candidates|length }} Records</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small" id="candidatesTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2">#</th>
+                                <th class="px-2 py-2" onclick="sortTable(1)">Full Name <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2" onclick="sortTable(2)">Passport No <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2">Position</th>
+                                <th class="px-2 py-2">Contact</th>
+                                <th class="px-2 py-2">Agent</th>
+                                <th class="px-2 py-2">Client</th>
+                                <th class="px-2 py-2 text-end">Salary</th>
+                                <th class="px-2 py-2 text-end">Total Payments</th>
+                                <th class="px-2 py-2 text-center" onclick="sortTable(9)">Registered <i class="fas fa-sort ms-1"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for candidate in candidates %}
+                            <tr>
+                                <td class="px-2">{{ forloop.counter }}</td>
+                                <td class="px-2 fw-semibold">{{ candidate.full_name|truncatechars:25 }}</td>
+                                <td class="px-2 font-monospace">{{ candidate.passport_no|truncatechars:15 }}</td>
+                                <td class="px-2">{{ candidate.position|truncatechars:15 }}</td>
+                                <td class="px-2">{{ candidate.contact_number|truncatechars:12 }}</td>
+                                <td class="px-2">
+                                    {% if candidate.agent %}
+                                        {{ candidate.agent.name|truncatechars:15 }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2">
+                                    {% if candidate.client %}
+                                        {{ candidate.client.company_name|truncatechars:15 }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-end">UGX {{ candidate.salary|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-success fw-semibold">UGX {{ candidate.payment_total|default:"0"|floatformat:0 }}</td>
+                                <td class="px-2 text-center"><small>{{ candidate.created_at|date:"m/d/y" }}</small></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center py-4">
+                                    <i class="fas fa-user-slash fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No candidates found</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Footer (only visible when printing) -->
+<div class="d-none d-print-block mt-5">
+    <hr>
+    <div class="row">
+        <div class="col-6">
+            <p class="small text-muted">Generated by: {{ user.get_full_name|default:user.username }}</p>
+        </div>
+        <div class="col-6 text-end">
+            <p class="small text-muted">Page <span class="page-number"></span></p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById('candidatesTable');
+        if (!table) return;
+        
+        switching = true;
+        dir = 'asc';
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName('TD')[n];
+                y = rows[i + 1].getElementsByTagName('TD')[n];
+                
+                if (x && y) {
+                    if (dir == 'asc') {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == 'desc') {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == 'asc') {
+                    dir = 'desc';
+                    switching = true;
+                }
+            }
+        }
+    }
+    
+    // Add print optimization
+    window.onbeforeprint = function() {
+        var table = document.getElementById('candidatesTable');
+        if (table) {
+            table.style.width = '100%';
+        }
+    };
+</script>
+{% endblock %}
+
+<style>
+    @media print {
+        .d-print-none {
+            display: none !important;
+        }
+        .d-print-block {
+            display: block !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: black !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .badge {
+            border: 1px solid #000 !important;
+            color: black !important;
+            background-color: transparent !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+    
+    .table > :not(caption) > * > * {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h5 {
+        font-size: 1rem;
+    }
+    .small, .form-label {
+        font-size: 0.7rem;
+    }
+    .form-select-sm, .form-control-sm {
+        font-size: 0.75rem;
+    }
+    .badge {
+        font-weight: 500;
+        font-size: 0.65rem;
+    }
+    h4 {
+        font-size: 1.3rem;
+    }
+</style>

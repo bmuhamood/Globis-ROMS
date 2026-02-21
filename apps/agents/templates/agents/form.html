@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="text-secondary">
+            <i class="fas fa-handshake me-2"></i>
+            {% if agent %}Edit Agent{% else %}Add New Agent{% endif %}
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ agent.name|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ agent.email|default:'' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone *</label>
+                            <input type="text" class="form-control" id="phone" name="phone" 
+                                   value="{{ agent.phone|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="commission_rate" class="form-label">Commission Rate (%)</label>
+                            <input type="number" step="0.01" class="form-control" id="commission_rate" name="commission_rate" 
+                                   value="{{ agent.commission_rate|default:'0' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="3">{{ agent.address|default:'' }}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <a href="{% url 'agent_list' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Agent
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

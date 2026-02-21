@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="text-secondary">
+            <i class="fas fa-users-cog me-2"></i>
+            {% if user_obj %}Edit User: {{ user_obj.username }}{% else %}Add New User{% endif %}
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header" style="background: linear-gradient(135deg, #0184FC, #00016E); color: white;">
+                <h5 class="mb-0">User Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Username *</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ user_obj.username|default:'' }}" {% if user_obj %}readonly{% endif %} required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ user_obj.email|default:'' }}" required>
+                        </div>
+                    </div>
+                    
+                    {% if not user_obj %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password *</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label">Confirm Password *</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="new_password" class="form-label">New Password (leave blank to keep current)</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password">
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ user_obj.first_name|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ user_obj.last_name|default:'' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="phone" name="phone" 
+                                   value="{{ profile.phone|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="role" class="form-label">Role *</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="">Select Role</option>
+                                {% for role_value, role_name in roles %}
+                                <option value="{{ role_value }}" {% if profile.role == role_value %}selected{% endif %}>
+                                    {{ role_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3" id="agent_select" style="display: none;">
+                        <div class="col-md-12">
+                            <label for="agent" class="form-label">Link to Agent</label>
+                            <select class="form-select" id="agent" name="agent">
+                                <option value="">Select Agent</option>
+                                {% for agent in agents %}
+                                <option value="{{ agent.id }}" {% if profile.agent_id == agent.id %}selected{% endif %}>
+                                    {{ agent.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Select this if the user is an agent</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Staff Permissions Section -->
+                    <div id="staff_permissions" style="display: none;">
+                        <hr>
+                        <h5 class="mb-3">Staff Permissions</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="can_add_candidates" name="can_add_candidates" 
+                                           {% if profile.can_add_candidates %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_add_candidates">
+                                        Can Add Candidates
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="can_edit_candidates" name="can_edit_candidates" 
+                                           {% if profile.can_edit_candidates %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_edit_candidates">
+                                        Can Edit Candidates
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="can_add_agents" name="can_add_agents" 
+                                           {% if profile.can_add_agents %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_add_agents">
+                                        Can Add Agents
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="can_edit_agents" name="can_edit_agents" 
+                                           {% if profile.can_edit_agents %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_edit_agents">
+                                        Can Edit Agents
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="can_add_clients" name="can_add_clients" 
+                                           {% if profile.can_add_clients %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_add_clients">
+                                        Can Add Clients
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="can_edit_clients" name="can_edit_clients" 
+                                           {% if profile.can_edit_clients %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_edit_clients">
+                                        Can Edit Clients
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="can_export" name="can_export" 
+                                           {% if profile.can_export %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_export">
+                                        Can Export Data
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="can_view_reports" name="can_view_reports" 
+                                           {% if profile.can_view_reports %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_view_reports">
+                                        Can View Reports
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <div class="text-end">
+                        <a href="{% url 'user_list' %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show/hide agent select and staff permissions based on role
+    document.getElementById('role').addEventListener('change', function() {
+        var agentSelect = document.getElementById('agent_select');
+        var staffPermissions = document.getElementById('staff_permissions');
+        
+        if (this.value === 'agent') {
+            agentSelect.style.display = 'flex';
+            staffPermissions.style.display = 'none';
+        } else if (this.value === 'staff') {
+            agentSelect.style.display = 'none';
+            staffPermissions.style.display = 'block';
+        } else {
+            agentSelect.style.display = 'none';
+            staffPermissions.style.display = 'none';
+        }
+    });
+    
+    // Trigger on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        var roleSelect = document.getElementById('role');
+        var agentSelect = document.getElementById('agent_select');
+        var staffPermissions = document.getElementById('staff_permissions');
+        
+        if (roleSelect.value === 'agent') {
+            agentSelect.style.display = 'flex';
+            staffPermissions.style.display = 'none';
+        } else if (roleSelect.value === 'staff') {
+            agentSelect.style.display = 'none';
+            staffPermissions.style.display = 'block';
+        } else {
+            agentSelect.style.display = 'none';
+            staffPermissions.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

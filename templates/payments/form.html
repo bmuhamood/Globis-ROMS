@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="text-secondary">
+            <i class="fas fa-money-bill-wave me-2"></i>
+            Record New Payment
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header" style="background: linear-gradient(135deg, #0184FC, #00016E); color: white;">
+                <h5 class="mb-0">Payment Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="paymentForm">
+                    {% csrf_token %}
+                    
+                    <!-- Hidden field for preselected candidate -->
+                    {% if selected_candidate %}
+                    <input type="hidden" name="candidate" value="{{ selected_candidate.id }}" id="candidate_hidden">
+                    {% endif %}
+                    
+                    <!-- Candidate Selection (only shown if no candidate preselected) -->
+                    {% if not selected_candidate %}
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="candidate" class="form-label">Candidate *</label>
+                            <select class="form-select" id="candidate" name="candidate" required onchange="loadCandidateDetails()">
+                                <option value="">Select Candidate</option>
+                                {% for candidate in candidates %}
+                                <option value="{{ candidate.id }}" 
+                                        data-balance="{{ candidate.remaining_balance }}"
+                                        data-initial="{{ candidate.initial_amount }}"
+                                        data-plan="{{ candidate.payment_plan }}"
+                                        data-name="{{ candidate.full_name }}"
+                                        data-passport="{{ candidate.passport_no }}"
+                                        {% if request.GET.candidate == candidate.id|stringformat:'i' %}selected{% endif %}>
+                                    {{ candidate.full_name }} - {{ candidate.passport_no }} 
+                                    (Balance: UGX {{ candidate.remaining_balance|floatformat:0 }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Candidate Info Card (shown when candidate is selected) -->
+                    <div id="candidate_info_card" class="card mb-4 bg-light" style="display: {% if selected_candidate %}block{% else %}none{% endif %};">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <small class="text-muted">Candidate</small>
+                                    <h6 id="display_name">
+                                        {% if selected_candidate %}{{ selected_candidate.full_name }}{% endif %}
+                                    </h6>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Passport</small>
+                                    <h6 id="display_passport">
+                                        {% if selected_candidate %}{{ selected_candidate.passport_no }}{% endif %}
+                                    </h6>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Payment Plan</small>
+                                    <h6 id="display_plan">
+                                        {% if selected_candidate %}{{ selected_candidate.get_payment_plan_display }}{% endif %}
+                                    </h6>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-4">
+                                    <small class="text-muted">Total Amount</small>
+                                    <h5 class="text-primary" id="display_initial">
+                                        {% if selected_candidate %}UGX {{ selected_candidate.initial_amount|floatformat:0 }}{% endif %}
+                                    </h5>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Paid So Far</small>
+                                    <h5 class="text-success" id="display_paid">
+                                        {% if selected_candidate %}
+                                            UGX {% widthratio selected_candidate.get_payment_progress 1 selected_candidate.initial_amount %}
+                                        {% endif %}
+                                    </h5>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Remaining Balance</small>
+                                    <h5 class="{% if selected_candidate.remaining_balance == 0 %}text-success{% else %}text-warning{% endif %}" id="display_balance">
+                                        {% if selected_candidate %}UGX {{ selected_candidate.remaining_balance|floatformat:0 }}{% endif %}
+                                    </h5>
+                                </div>
+                            </div>
+                            {% if selected_candidate and selected_candidate.payment_plan != 'cash' %}
+                            <div class="alert alert-info mt-2 mb-0 py-2">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    This candidate is on <strong>{{ selected_candidate.get_payment_plan_display }}</strong>.
+                                    {% if selected_candidate.payment_plan == 'loan' and selected_candidate.loan_provider %}
+                                    (Provider: {{ selected_candidate.loan_provider }})
+                                    {% endif %}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Balance Preview (shows when amount is entered) -->
+                    <div id="balance_preview" class="alert" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>Current Balance:</strong> 
+                                <span id="prev_balance">UGX 0</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Payment Amount:</strong> 
+                                <span id="payment_amount">UGX 0</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>New Balance:</strong> 
+                                <span id="new_balance">UGX 0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="payment_type" class="form-label">Payment Type *</label>
+                            <select class="form-select" id="payment_type" name="payment_type" required>
+                                <option value="">Select Type</option>
+                                <option value="registration">Registration</option>
+                                <option value="medical">Medical</option>
+                                <option value="visa">Visa</option>
+                                <option value="ticket">Ticket</option>
+                                <option value="balance">Balance Payment</option>
+                                <option value="loan_disbursement">Loan Disbursement</option>
+                                <option value="installment">Installment Payment</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="amount" class="form-label">Amount (UGX) *</label>
+                            <input type="number" step="1000" class="form-control" id="amount" name="amount" required onkeyup="calculateNewBalance()" onchange="calculateNewBalance()">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="date" class="form-label">Payment Date *</label>
+                            <input type="date" class="form-control" id="date" name="date" value="{% now 'Y-m-d' %}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="payment_method" class="form-label">Payment Method *</label>
+                            <select class="form-select" id="payment_method" name="payment_method" required>
+                                <option value="">Select Method</option>
+                                <option value="cash">Cash</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="mobile_money">Mobile Money</option>
+                                <option value="cheque">Cheque</option>
+                                <option value="loan">Loan</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="remarks" class="form-label">Remarks</label>
+                            <textarea class="form-control" id="remarks" name="remarks" rows="3" placeholder="Enter any notes about this payment..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <a href="{% url 'payment_list' %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Record Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadCandidateDetails() {
+        var select = document.getElementById('candidate');
+        if (!select) return;
+        
+        var selected = select.options[select.selectedIndex];
+        
+        if (selected.value) {
+            var balance = parseFloat(selected.getAttribute('data-balance')) || 0;
+            var initial = parseFloat(selected.getAttribute('data-initial')) || 0;
+            var plan = selected.getAttribute('data-plan');
+            var paid = initial - balance;
+            var name = selected.getAttribute('data-name');
+            var passport = selected.getAttribute('data-passport');
+            
+            // Update display
+            document.getElementById('display_name').innerText = name;
+            document.getElementById('display_passport').innerText = passport;
+            document.getElementById('display_initial').innerHTML = 'UGX ' + initial.toLocaleString();
+            document.getElementById('display_paid').innerHTML = 'UGX ' + paid.toLocaleString();
+            document.getElementById('display_balance').innerHTML = 'UGX ' + balance.toLocaleString();
+            
+            // Show plan
+            var planText = '';
+            if (plan === 'loan') planText = 'Loan';
+            else if (plan === 'installment') planText = 'Installment Plan';
+            else planText = 'Full Cash Payment';
+            document.getElementById('display_plan').innerText = planText;
+            
+            document.getElementById('candidate_info_card').style.display = 'block';
+            
+            // Store current balance for calculation
+            document.getElementById('candidate_info_card').setAttribute('data-current-balance', balance);
+            
+            // Trigger balance calculation if amount is already entered
+            calculateNewBalance();
+        } else {
+            document.getElementById('candidate_info_card').style.display = 'none';
+            document.getElementById('balance_preview').style.display = 'none';
+        }
+    }
+    
+    function calculateNewBalance() {
+        var currentBalance = 0;
+        var select = document.getElementById('candidate');
+        var hiddenCandidate = document.getElementById('candidate_hidden');
+        
+        if (select && select.selectedIndex > 0) {
+            var selected = select.options[select.selectedIndex];
+            currentBalance = parseFloat(selected.getAttribute('data-balance')) || 0;
+        } else if (hiddenCandidate) {
+            // Get balance from displayed info
+            var balanceText = document.getElementById('display_balance').innerText;
+            currentBalance = parseFloat(balanceText.replace(/[^0-9.-]/g, '')) || 0;
+        }
+        
+        var amount = parseFloat(document.getElementById('amount').value) || 0;
+        var newBalance = currentBalance - amount;
+        
+        document.getElementById('prev_balance').innerHTML = 'UGX ' + currentBalance.toLocaleString();
+        document.getElementById('payment_amount').innerHTML = 'UGX ' + amount.toLocaleString();
+        document.getElementById('new_balance').innerHTML = 'UGX ' + newBalance.toLocaleString();
+        
+        var balancePreview = document.getElementById('balance_preview');
+        
+        if (amount > 0 && currentBalance > 0) {
+            balancePreview.style.display = 'block';
+            
+            // Change color based on new balance
+            if (amount > currentBalance) {
+                balancePreview.className = 'alert alert-danger';
+                document.getElementById('new_balance').innerHTML += ' (Exceeds balance!)';
+            } else if (newBalance === 0) {
+                balancePreview.className = 'alert alert-success';
+                document.getElementById('new_balance').innerHTML += ' (Fully paid!)';
+            } else {
+                balancePreview.className = 'alert alert-warning';
+            }
+        } else {
+            balancePreview.style.display = 'none';
+        }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if selected_candidate %}
+        // If candidate is preselected, show the info card
+        document.getElementById('candidate_info_card').style.display = 'block';
+        {% endif %}
+        
+        {% if request.GET.candidate %}
+        // If candidate ID in URL, preselect it in dropdown
+        var select = document.getElementById('candidate');
+        if (select) {
+            select.value = "{{ request.GET.candidate }}";
+            loadCandidateDetails();
+        }
+        {% endif %}
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-file-invoice-dollar me-2"></i>{{ report_type }}</h4>
+                <p class="text-muted small mb-0">Generated on {% now "F j, Y" %} at {% now "H:i" %}</p>
+            </div>
+            <div>
+                <button onclick="window.print()" class="btn btn-primary btn-sm">
+                    <i class="fas fa-print me-1"></i>Print
+                </button>
+                <a href="{% url 'report_list' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters - Compact -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-filter me-2"></i>Filter Report</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label small mb-0">Payment Plan</label>
+                        <select class="form-select form-select-sm" name="payment_plan">
+                            <option value="">All Plans</option>
+                            <option value="loan" {% if payment_plan == 'loan' %}selected{% endif %}>🏦 Loan</option>
+                            <option value="installment" {% if payment_plan == 'installment' %}selected{% endif %}>📅 Installment</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-0">Payment Status</label>
+                        <select class="form-select form-select-sm" name="status">
+                            <option value="">All Status</option>
+                            <option value="pending" {% if status == 'pending' %}selected{% endif %}>⏳ Pending</option>
+                            <option value="paid" {% if status == 'paid' %}selected{% endif %}>✅ Paid</option>
+                            <option value="overdue" {% if status == 'overdue' %}selected{% endif %}>⚠️ Overdue</option>
+                            <option value="partial" {% if status == 'partial' %}selected{% endif %}>🔄 Partial</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm px-3">
+                            <i class="fas fa-filter me-1"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'loan_report' %}" class="btn btn-outline-secondary btn-sm px-3 ms-2">
+                            <i class="fas fa-times me-1"></i>Reset
+                        </a>
+                        <button type="button" class="btn btn-outline-info btn-sm ms-2" onclick="exportTableToExcel()">
+                            <i class="fas fa-file-excel me-1"></i>Export
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Filter Tabs -->
+<div class="row mt-2 d-print-none">
+    <div class="col-12">
+        <ul class="nav nav-pills nav-fill bg-light rounded p-1 small">
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if not filter_type %}active{% endif %}" href="{% url 'loan_report' %}">
+                    <i class="fas fa-list me-1"></i>All Plans
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'loan' %}active{% endif %}" href="?payment_plan=loan">
+                    <i class="fas fa-hand-holding-usd me-1 text-danger"></i>Loans Only
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'installment' %}active{% endif %}" href="?payment_plan=installment">
+                    <i class="fas fa-calendar-alt me-1 text-warning"></i>Installments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'overdue' %}active{% endif %}" href="?status=overdue">
+                    <i class="fas fa-exclamation-triangle me-1 text-danger"></i>Overdue
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'pending' %}active{% endif %}" href="?status=pending">
+                    <i class="fas fa-hourglass me-1 text-warning"></i>Pending
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Summary Cards - Compact -->
+<div class="row mt-3">
+    <div class="col-md-4 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Total Loan Amount</div>
+                        <div class="h4 fw-bold mb-0">UGX {{ total_loan_amount|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-hand-holding-usd text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Total Paid</div>
+                        <div class="h4 fw-bold mb-0">UGX {{ total_paid|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-money-bill-wave text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card border-start border-danger border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-danger text-uppercase mb-0">Outstanding</div>
+                        <div class="h4 fw-bold mb-0">UGX {{ total_outstanding|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-danger bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-exclamation-triangle text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Candidates on Payment Plans -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small"><i class="fas fa-users me-2 text-danger"></i>Candidates on Payment Plans</h6>
+                <span class="badge bg-danger">{{ candidates|length }} Records</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small" id="candidatesTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2" onclick="sortTable(0)">Candidate <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2" onclick="sortTable(1)">Passport <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2">Plan</th>
+                                <th class="px-2 py-2 text-end" onclick="sortTable(3)">Total <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-end" onclick="sortTable(4)">Paid <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-end" onclick="sortTable(5)">Balance <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2">Progress</th>
+                                <th class="px-2 py-2">Provider</th>
+                                <th class="px-2 py-2 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for candidate in candidates %}
+                            <tr class="{% if candidate.remaining_balance > 0 and candidate.payment_plan == 'loan' %}table-light{% endif %}">
+                                <td class="px-2 fw-semibold">
+                                    <a href="{% url 'candidate_detail' candidate.id %}" class="text-decoration-none">
+                                        {{ candidate.full_name|truncatechars:20 }}
+                                    </a>
+                                </td>
+                                <td class="px-2 font-monospace">{{ candidate.passport_no|truncatechars:12 }}</td>
+                                <td class="px-2">
+                                    <span class="badge {% if candidate.payment_plan == 'loan' %}bg-danger{% else %}bg-warning text-dark{% endif %} px-2 py-1" style="font-size: 0.65rem;">
+                                        {% if candidate.payment_plan == 'loan' %}🏦 Loan{% else %}📅 Installment{% endif %}
+                                    </span>
+                                </td>
+                                <td class="px-2 text-end fw-bold">UGX {{ candidate.initial_amount|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-success fw-semibold">
+                                    UGX {% widthratio candidate.get_payment_progress 100 candidate.initial_amount %}
+                                </td>
+                                <td class="px-2 text-end {% if candidate.remaining_balance == 0 %}text-success{% else %}text-warning{% endif %} fw-semibold">
+                                    UGX {{ candidate.remaining_balance|floatformat:0 }}
+                                </td>
+                                <td class="px-2" style="min-width: 100px;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1" style="height: 6px;">
+                                            <div class="progress-bar {% if candidate.remaining_balance == 0 %}bg-success{% else %}bg-warning{% endif %}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ candidate.get_payment_progress }}%;"></div>
+                                        </div>
+                                        <span class="ms-2 small fw-bold">{{ candidate.get_payment_progress }}%</span>
+                                    </div>
+                                </td>
+                                <td class="px-2">{{ candidate.loan_provider|truncatechars:15|default:"<span class='text-muted'>-</span>" }}</td>
+                                <td class="px-2 text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'loan_payment_history' candidate.id %}" class="btn btn-outline-info" title="Payment History">
+                                            <i class="fas fa-history"></i>
+                                        </a>
+                                        <a href="{% url 'payment_add' %}?candidate={{ candidate.id }}" class="btn btn-outline-success" title="Record Payment">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <i class="fas fa-hand-holding-usd fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No candidates on payment plans</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment History -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small"><i class="fas fa-history me-2 text-primary"></i>Payment History</h6>
+                <span class="badge bg-primary">{{ payment_histories|length }} Records</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small" id="historyTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2" onclick="sortTable(0)">Date <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2" onclick="sortTable(1)">Candidate <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2" onclick="sortTable(2)">Due Date <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-end" onclick="sortTable(3)">Due Amount <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2 text-end" onclick="sortTable(4)">Paid Amount <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2">Status</th>
+                                <th class="px-2 py-2 text-center">Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in payment_histories %}
+                            <tr class="{% if history.status == 'overdue' %}table-danger{% elif history.status == 'paid' %}table-success{% endif %}">
+                                <td class="px-2">{{ history.payment.date|date:"m/d/y"|default:"-" }}</td>
+                                <td class="px-2 fw-semibold">{{ history.candidate.full_name|truncatechars:20 }}</td>
+                                <td class="px-2">{{ history.due_date|date:"m/d/y" }}</td>
+                                <td class="px-2 text-end">UGX {{ history.amount_due|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-success fw-semibold">UGX {{ history.amount_paid|floatformat:0 }}</td>
+                                <td class="px-2">
+                                    {% if history.status == 'paid' %}
+                                        <span class="badge bg-success px-2 py-1" style="font-size: 0.65rem;">✅ Paid</span>
+                                    {% elif history.status == 'overdue' %}
+                                        <span class="badge bg-danger px-2 py-1" style="font-size: 0.65rem;">⚠️ Overdue</span>
+                                    {% elif history.status == 'partial' %}
+                                        <span class="badge bg-warning px-2 py-1" style="font-size: 0.65rem;">🔄 Partial</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary px-2 py-1" style="font-size: 0.65rem;">⏳ Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    {% if history.payment %}
+                                    <a href="{% url 'payment_receipt' history.payment.id %}" class="btn btn-outline-info btn-sm py-0 px-1" target="_blank" title="Print Receipt">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No payment history found</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Footer -->
+<div class="d-none d-print-block mt-5">
+    <hr>
+    <div class="row">
+        <div class="col-6">
+            <p class="small text-muted">Generated by: {{ user.get_full_name|default:user.username }}</p>
+        </div>
+        <div class="col-6 text-end">
+            <p class="small text-muted">Page <span class="page-number"></span></p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById('candidatesTable');
+        if (!table) return;
+        
+        switching = true;
+        dir = 'asc';
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName('TD')[n];
+                y = rows[i + 1].getElementsByTagName('TD')[n];
+                
+                if (x && y) {
+                    // Handle currency values by removing non-numeric characters
+                    let xVal = x.innerHTML.replace(/[^0-9.-]/g, '');
+                    let yVal = y.innerHTML.replace(/[^0-9.-]/g, '');
+                    
+                    if (!isNaN(parseFloat(xVal)) && !isNaN(parseFloat(yVal))) {
+                        xVal = parseFloat(xVal);
+                        yVal = parseFloat(yVal);
+                    } else {
+                        xVal = x.innerHTML.toLowerCase();
+                        yVal = y.innerHTML.toLowerCase();
+                    }
+                    
+                    if (dir == 'asc') {
+                        if (xVal > yVal) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == 'desc') {
+                        if (xVal < yVal) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == 'asc') {
+                    dir = 'desc';
+                    switching = true;
+                }
+            }
+        }
+    }
+    
+    function exportTableToExcel() {
+        var table = document.getElementById('candidatesTable');
+        var html = table.outerHTML;
+        var url = 'data:application/vnd.ms-excel,' + escape(html);
+        var link = document.createElement('a');
+        link.download = 'loan_report.xls';
+        link.href = url;
+        link.click();
+    }
+    
+    // Add print optimization
+    window.onbeforeprint = function() {
+        var table = document.getElementById('candidatesTable');
+        if (table) {
+            table.style.width = '100%';
+        }
+    };
+</script>
+{% endblock %}
+
+<style>
+    @media print {
+        .d-print-none {
+            display: none !important;
+        }
+        .d-print-block {
+            display: block !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: black !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .badge {
+            border: 1px solid #000 !important;
+            color: black !important;
+            background-color: transparent !important;
+        }
+    }
+    
+    .table > :not(caption) > * > * {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h4 {
+        font-size: 1.2rem;
+    }
+    .small, .form-label {
+        font-size: 0.7rem;
+    }
+    .form-select-sm, .form-control-sm {
+        font-size: 0.75rem;
+    }
+    .badge {
+        font-weight: 500;
+        font-size: 0.65rem;
+    }
+    h4 {
+        font-size: 1.3rem;
+    }
+    .progress {
+        background-color: #e9ecef;
+    }
+    .btn-group-sm .btn {
+        padding: 0.15rem 0.25rem;
+        font-size: 0.65rem;
+    }
+    .table-success {
+        background-color: rgba(40, 167, 69, 0.05);
+    }
+    .table-danger {
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+</style>

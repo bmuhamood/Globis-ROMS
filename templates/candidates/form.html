@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="text-secondary">
+            <i class="fas fa-user-graduate me-2"></i>
+            {% if candidate %}Edit Candidate: {{ candidate.full_name }}{% else %}Add New Candidate{% endif %}
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header" style="background: linear-gradient(135deg, #0184FC, #00016E); color: white;">
+                <h5 class="mb-0">Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="candidateForm">
+                    {% csrf_token %}
+                    
+                    <!-- For edit mode, show the candidate name as read-only -->
+                    {% if candidate %}
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Editing candidate: <strong>{{ candidate.full_name }}</strong> (Passport: {{ candidate.passport_no }})
+                        <input type="hidden" name="candidate_id" value="{{ candidate.id }}">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="full_name" class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" 
+                                   value="{{ candidate.full_name|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="passport_no" class="form-label">Passport Number *</label>
+                            <input type="text" class="form-control" id="passport_no" name="passport_no" 
+                                   value="{{ candidate.passport_no|default:'' }}" {% if candidate %}readonly{% endif %} required>
+                            {% if candidate %}
+                            <small class="text-muted">Passport number cannot be changed</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="passport_expiry" class="form-label">Passport Expiry *</label>
+                            <input type="date" class="form-control" id="passport_expiry" name="passport_expiry" 
+                                   value="{{ candidate.passport_expiry|date:'Y-m-d'|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="position" class="form-label">Position *</label>
+                            <input type="text" class="form-control" id="position" name="position" 
+                                   value="{{ candidate.position|default:'' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="contact_number" class="form-label">Contact Number *</label>
+                            <input type="text" class="form-control" id="contact_number" name="contact_number" 
+                                   value="{{ candidate.contact_number|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="salary" class="form-label">Salary (UGX) *</label>
+                            <input type="number" step="1000" class="form-control" id="salary" name="salary" 
+                                   value="{{ candidate.salary|default:'' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="mother_name" class="form-label">Mother's Name</label>
+                            <input type="text" class="form-control" id="mother_name" name="mother_name" 
+                                   value="{{ candidate.mother_name|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="father_name" class="form-label">Father's Name</label>
+                            <input type="text" class="form-control" id="father_name" name="father_name" 
+                                   value="{{ candidate.father_name|default:'' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="blood_group" class="form-label">Blood Group</label>
+                            <select class="form-select" id="blood_group" name="blood_group">
+                                <option value="">Select Blood Group</option>
+                                <option value="A+" {% if candidate.blood_group == 'A+' %}selected{% endif %}>A+</option>
+                                <option value="A-" {% if candidate.blood_group == 'A-' %}selected{% endif %}>A-</option>
+                                <option value="B+" {% if candidate.blood_group == 'B+' %}selected{% endif %}>B+</option>
+                                <option value="B-" {% if candidate.blood_group == 'B-' %}selected{% endif %}>B-</option>
+                                <option value="O+" {% if candidate.blood_group == 'O+' %}selected{% endif %}>O+</option>
+                                <option value="O-" {% if candidate.blood_group == 'O-' %}selected{% endif %}>O-</option>
+                                <option value="AB+" {% if candidate.blood_group == 'AB+' %}selected{% endif %}>AB+</option>
+                                <option value="AB-" {% if candidate.blood_group == 'AB-' %}selected{% endif %}>AB-</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="agent" class="form-label">Agent</label>
+                            <select class="form-select" id="agent" name="agent">
+                                <option value="">Select Agent</option>
+                                {% for agent in agents %}
+                                <option value="{{ agent.id }}" {% if candidate.agent_id == agent.id %}selected{% endif %}>
+                                    {{ agent.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="client" class="form-label">Client</label>
+                            <select class="form-select" id="client" name="client">
+                                <option value="">Select Client</option>
+                                {% for client in clients %}
+                                <option value="{{ client.id }}" {% if candidate.client_id == client.id %}selected{% endif %}>
+                                    {{ client.company_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- PAYMENT INFORMATION SECTION -->
+                    <hr class="my-4">
+                    <h5 class="text-primary mb-3"><i class="fas fa-money-bill-wave me-2"></i>Payment Information</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="initial_amount" class="form-label">Total Amount to Pay (UGX) *</label>
+                            <input type="number" step="1000" class="form-control" id="initial_amount" name="initial_amount" 
+                                   value="{{ candidate.initial_amount|default:'' }}" required 
+                                   onchange="calculatePaymentSummary()">
+                            <small class="text-muted">Total amount the candidate is supposed to pay</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="payment_plan" class="form-label">Payment Plan</label>
+                            <select class="form-select" id="payment_plan" name="payment_plan" onchange="toggleLoanFields(); calculatePaymentSummary()">
+                                <option value="cash" {% if candidate.payment_plan == 'cash' %}selected{% endif %}>Full Cash Payment</option>
+                                <option value="loan" {% if candidate.payment_plan == 'loan' %}selected{% endif %}>Loan</option>
+                                <option value="installment" {% if candidate.payment_plan == 'installment' %}selected{% endif %}>Installment Plan</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Summary Card -->
+                    <div class="card mb-4 bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary">Payment Summary</h6>
+                            <div class="row">
+                                <div class="col-md-4 text-center">
+                                    <label class="form-label text-muted">Total Amount</label>
+                                    <h4 class="text-primary" id="display_total">UGX 0</h4>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <label class="form-label text-muted">Amount Paid</label>
+                                    <h4 class="text-success" id="display_paid">
+                                        {% if candidate %}
+                                            UGX {{ candidate.initial_amount|add:candidate.remaining_balance|floatformat:0|default:"0" }}
+                                        {% else %}
+                                            UGX 0
+                                        {% endif %}
+                                    </h4>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <label class="form-label text-muted">Remaining Balance</label>
+                                    <h4 class="{% if candidate.remaining_balance == 0 %}text-success{% else %}text-warning{% endif %}" id="display_balance">
+                                        {% if candidate %}
+                                            UGX {{ candidate.remaining_balance|floatformat:0|default:"0" }}
+                                        {% else %}
+                                            UGX 0
+                                        {% endif %}
+                                    </h4>
+                                </div>
+                            </div>
+                            {% if candidate %}
+                            <div class="progress mt-3" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ candidate.get_payment_progress }}%;" 
+                                     aria-valuenow="{{ candidate.get_payment_progress }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <p class="text-center mt-2 small">{{ candidate.get_payment_progress }}% Paid</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Loan Provider Fields (shown only when loan is selected) -->
+                    <div id="loan_fields" style="display: {% if candidate.payment_plan == 'loan' %}block{% else %}none{% endif %};">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="loan_provider" class="form-label">Loan Provider</label>
+                                <input type="text" class="form-control" id="loan_provider" name="loan_provider" 
+                                       value="{{ candidate.loan_provider|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="loan_reference" class="form-label">Loan Reference Number</label>
+                                <input type="text" class="form-control" id="loan_reference" name="loan_reference" 
+                                       value="{{ candidate.loan_reference|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Installment Info (shown only when installment is selected) -->
+                    <div id="installment_info" class="alert alert-info" style="display: {% if candidate.payment_plan == 'installment' %}block{% else %}none{% endif %};">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Installment Plan:</strong> After saving, you can create an installment schedule from the candidate detail page or using the "Create Schedule" menu.
+                        <div class="mt-2">
+                            <a href="{% url 'create_payment_schedule' candidate.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-calendar-alt me-2"></i>Create Schedule Now
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Balance (for edit mode) - Detailed View -->
+                    {% if candidate %}
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Payment Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="text-center p-2">
+                                                <span class="d-block text-muted">Total Amount</span>
+                                                <strong class="h5">UGX {{ candidate.initial_amount|floatformat:0 }}</strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-2">
+                                                <span class="d-block text-muted">Total Paid</span>
+                                                <strong class="h5 text-success">UGX {% widthratio candidate.get_payment_progress 1 candidate.initial_amount %}</strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-2">
+                                                <span class="d-block text-muted">Remaining</span>
+                                                <strong class="h5 {% if candidate.remaining_balance == 0 %}text-success{% else %}text-warning{% endif %}">
+                                                    UGX {{ candidate.remaining_balance|floatformat:0 }}
+                                                </strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-2">
+                                                <span class="d-block text-muted">Status</span>
+                                                {% if candidate.fully_paid %}
+                                                    <span class="badge bg-success">FULLY PAID</span>
+                                                    <small class="d-block">{{ candidate.fully_paid_date|date:"M d, Y" }}</small>
+                                                {% else %}
+                                                    <span class="badge bg-warning">PENDING</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="remarks" class="form-label">Remarks</label>
+                            <textarea class="form-control" id="remarks" name="remarks" rows="3">{{ candidate.remarks|default:'' }}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <a href="{% url 'candidate_list' %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>{% if candidate %}Update Candidate{% else %}Save Candidate{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleLoanFields() {
+        var plan = document.getElementById('payment_plan').value;
+        var loanFields = document.getElementById('loan_fields');
+        var installmentInfo = document.getElementById('installment_info');
+        
+        if (plan === 'loan') {
+            loanFields.style.display = 'block';
+            installmentInfo.style.display = 'none';
+        } else if (plan === 'installment') {
+            loanFields.style.display = 'none';
+            installmentInfo.style.display = 'block';
+        } else {
+            loanFields.style.display = 'none';
+            installmentInfo.style.display = 'none';
+        }
+        calculatePaymentSummary();
+    }
+    
+    function calculatePaymentSummary() {
+        var initial = document.getElementById('initial_amount').value;
+        if (initial) {
+            document.getElementById('display_total').innerText = 'UGX ' + parseInt(initial).toLocaleString();
+            
+            // For new candidates, paid amount is 0
+            {% if not candidate %}
+            document.getElementById('display_paid').innerText = 'UGX 0';
+            document.getElementById('display_balance').innerText = 'UGX ' + parseInt(initial).toLocaleString();
+            document.getElementById('display_balance').className = 'text-warning';
+            {% endif %}
+        }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleLoanFields();
+        calculatePaymentSummary();
+    });
+</script>
+{% endblock %}

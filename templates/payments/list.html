@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="text-secondary"><i class="fas fa-money-bill-wave me-2"></i>Candidate Payments</h2>
+            <a href="{% url 'payment_add' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Record Payment
+            </a>
+        </div>
+        <p class="text-muted">Track all candidate payments</p>
+    </div>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header" style="background: #0184FC; color: white;">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Search & Filters</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Search</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" name="search" placeholder="Name, Passport, Receipt..." value="{{ search_query }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">Payment Type</label>
+                        <select class="form-select" name="payment_type">
+                            <option value="">All Types</option>
+                            {% for value, label in payment_types %}
+                            <option value="{{ value }}" {% if payment_type == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" name="payment_method">
+                            <option value="">All Methods</option>
+                            {% for value, label in payment_methods %}
+                            <option value="{{ value }}" {% if payment_method == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">From Date</label>
+                        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">To Date</label>
+                        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                    </div>
+                    
+                    <!-- Add filter for payment plan -->
+                    <div class="col-md-2">
+                        <label class="form-label">Payment Plan</label>
+                        <select class="form-select" name="payment_plan">
+                            <option value="">All Plans</option>
+                            <option value="cash" {% if payment_plan == 'cash' %}selected{% endif %}>Cash</option>
+                            <option value="loan" {% if payment_plan == 'loan' %}selected{% endif %}>Loan</option>
+                            <option value="installment" {% if payment_plan == 'installment' %}selected{% endif %}>Installment</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-2"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'payment_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Clear
+                        </a>
+                        <button type="button" class="btn btn-info" onclick="exportTableToExcel()">
+                            <i class="fas fa-file-excel me-2"></i>Export
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h6>Total Collections</h6>
+                <h4>UGX {{ total|floatformat:0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h6>Today's Payments</h6>
+                <h4>UGX {{ today_total|default:"0"|floatformat:0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h6>Total Transactions</h6>
+                <h4>{{ payments.count }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <h6>Unique Candidates</h6>
+                <h4>{{ unique_candidates|default:"0" }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header" style="background: #5EAAE1; color: white;">
+                <h5 class="mb-0">Payment Records</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="paymentsTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">Receipt # <i class="fas fa-sort ms-1"></i></th>
+                                <th onclick="sortTable(1)">Candidate <i class="fas fa-sort ms-1"></i></th>
+                                <th onclick="sortTable(2)">Type <i class="fas fa-sort ms-1"></i></th>
+                                <th onclick="sortTable(3)">Amount <i class="fas fa-sort ms-1"></i></th>
+                                <th>Previous Balance</th>
+                                <th>New Balance</th>
+                                <th onclick="sortTable(6)">Date <i class="fas fa-sort ms-1"></i></th>
+                                <th>Method</th>
+                                <th>Received By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td><span class="badge bg-info">{{ payment.receipt_number }}</span></td>
+                                <td>
+                                    <a href="{% url 'candidate_detail' payment.candidate.id %}" class="text-decoration-none">
+                                        {{ payment.candidate.full_name }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ payment.candidate.passport_no }}</small>
+                                    {% if payment.candidate.payment_plan != 'cash' %}
+                                    <span class="badge {% if payment.candidate.payment_plan == 'loan' %}bg-danger{% else %}bg-warning{% endif %}">
+                                        {{ payment.candidate.get_payment_plan_display }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ payment.get_payment_type_display }}</td>
+                                <td class="fw-bold text-success">UGX {{ payment.amount|floatformat:0 }}</td>
+                                <td class="text-muted">UGX {{ payment.previous_balance|floatformat:0 }}</td>
+                                <td class="fw-bold {% if payment.new_balance == 0 %}text-success{% else %}text-warning{% endif %}">
+                                    UGX {{ payment.new_balance|floatformat:0 }}
+                                </td>
+                                <td>{{ payment.date|date:"M d, Y" }}</td>
+                                <td>{{ payment.get_payment_method_display }}</td>
+                                <td>{{ payment.received_by.username }}</td>
+                                <td>
+                                    <a href="{% url 'payment_receipt' payment.id %}" class="btn btn-sm btn-info" target="_blank" title="Print Receipt">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                    {% if payment.candidate.payment_plan != 'cash' %}
+                                    <a href="{% url 'loan_payment_history' payment.candidate.id %}" class="btn btn-sm btn-warning" title="Payment History">
+                                        <i class="fas fa-history"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'payment_add' %}?candidate={{ payment.candidate.id }}" class="btn btn-sm btn-success" title="Add Another Payment">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center py-4">
+                                    <i class="fas fa-info-circle text-muted me-2"></i>
+                                    No payments found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if payments.has_other_pages %}
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if payments.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                &laquo; First
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ payments.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">Page {{ payments.number }} of {{ payments.paginator.num_pages }}</span>
+                        </li>
+                        
+                        {% if payments.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ payments.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                Next
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ payments.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                Last &raquo;
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function exportTableToExcel() {
+        var table = document.getElementById('paymentsTable');
+        var html = table.outerHTML;
+        var url = 'data:application/vnd.ms-excel,' + escape(html);
+        var link = document.createElement('a');
+        link.download = 'payments_report.xls';
+        link.href = url;
+        link.click();
+    }
+    
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById('paymentsTable');
+        switching = true;
+        dir = 'asc';
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName('TD')[n];
+                y = rows[i + 1].getElementsByTagName('TD')[n];
+                
+                if (dir == 'asc') {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == 'desc') {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == 'asc') {
+                    dir = 'desc';
+                    switching = true;
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}
