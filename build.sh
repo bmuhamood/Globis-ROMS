@@ -5,16 +5,13 @@ set -o errexit
 # Install dependencies
 pip install -r requirements.txt
 
+# Apply database migrations (this uses the migration files in your repo)
+python manage.py migrate
+
 # Collect static files
 python manage.py collectstatic --no-input
 
-# Run database migrations
-python manage.py migrate
-
-# Create superuser if it doesn't exist (using env vars)
-python manage.py ensure_superuser
-
-# Add after migrations in build.sh
+# Create superuser (optional)
 python manage.py shell -c "
 import os
 from django.contrib.auth.models import User
