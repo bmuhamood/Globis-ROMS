@@ -1,11 +1,36 @@
+# Core Django
 asgiref==3.11.1
 Django==6.0.2
+sqlparse==0.5.5
+tzdata==2025.3
+
+# Excel Processing
 et_xmlfile==2.0.0
 numpy==2.4.2
 openpyxl==3.1.5
 pandas==3.0.1
 python-dateutil==2.9.0.post0
 six==1.17.0
-sqlparse==0.5.5
-tzdata==2025.3
 xlrd==2.0.2
+
+# Database - PostgreSQL for production
+psycopg2-binary
+dj-database-url==2.1.0
+
+# Environment variables
+python-decouple==3.8
+# or
+# django-environ==0.11.2
+
+# Static files
+whitenoise==6.6.0
+
+# Production server
+gunicorn==21.2.0
+
+# Security - for password hashing
+# argon2-cffi==23.1.0
+
+# Caching (optional - for Redis)
+# redis==5.0.1
+# django-redis==5.4.0
