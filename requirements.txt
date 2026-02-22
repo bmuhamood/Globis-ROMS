@@ -1,19 +1,30 @@
-asgiref==3.11.1
-dj-database-url==2.1.0
+# Core Django packages
 Django==6.0.2
-django-environ==0.13.0
-et_xmlfile==2.0.0
-gunicorn==21.2.0
-numpy==2.4.2
-openpyxl==3.1.5
-packaging==26.0
-pandas==3.0.1
-psycopg2-binary==2.9.11
-python-dateutil==2.9.0.post0
-python-decouple==3.8
-six==1.17.0
+asgiref==3.11.1
 sqlparse==0.5.5
-typing_extensions==4.15.0
-tzdata==2025.3
+
+# Environment & config management
+django-environ==0.13.0
+python-decouple==3.8
+
+# Database
+dj-database-url==2.1.0
+psycopg2-binary==2.9.11
+
+# Web server & static files
+gunicorn==21.2.0
 whitenoise==6.6.0
+
+# Timezone & date utilities
+tzdata==2025.3
+python-dateutil==2.9.0.post0
+six==1.17.0
+typing_extensions==4.15.0
+packaging==26.0
+
+# Data analysis / Excel
+numpy==2.4.2
+pandas==3.0.1
+openpyxl==3.1.5
+et_xmlfile==2.0.0
 xlrd==2.0.2
