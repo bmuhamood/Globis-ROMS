@@ -1,9 +1,8 @@
-services:
+Updated = services:
   - type: web
     name: globis-hr
     runtime: python
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    releaseCommand: python manage.py migrate
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn globis_hr.wsgi:application
     envVars:
       - key: SECRET_KEY
@@ -17,10 +16,17 @@ services:
           name: globis-hr-db
           property: connectionString
       - key: DJANGO_SUPERUSER_USERNAME
-        value: admin
+        value: globis
       - key: DJANGO_SUPERUSER_EMAIL
-        value: admin@yourdomain.com
+        value: globishrsolutionug@gmail.com
       - key: DJANGO_SUPERUSER_PASSWORD
-        value: StrongPassword123
+        value: Hussein2019.,
       - key: PYTHON_VERSION
         value: 3.11.0
+    # These are separate top-level keys, not part of envVars
+    releaseCommand: python manage.py migrate
+
+databases:
+  - name: globis-hr-db
+    databaseName: globis
+    user: globis
