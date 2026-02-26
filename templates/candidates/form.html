@@ -208,15 +208,23 @@
                         </div>
                     </div>
                     
-                    <!-- Installment Info (shown only when installment is selected) -->
+                    <!-- Installment Info (shown only when installment is selected) - FIXED -->
                     <div id="installment_info" class="alert alert-info" style="display: {% if candidate.payment_plan == 'installment' %}block{% else %}none{% endif %};">
                         <i class="fas fa-info-circle me-2"></i>
                         <strong>Installment Plan:</strong> After saving, you can create an installment schedule from the candidate detail page or using the "Create Schedule" menu.
+                        
+                        <!-- Only show button in edit mode, not in add mode -->
+                        {% if candidate and candidate.id %}
                         <div class="mt-2">
                             <a href="{% url 'create_payment_schedule' candidate.id %}" class="btn btn-sm btn-primary">
                                 <i class="fas fa-calendar-alt me-2"></i>Create Schedule Now
                             </a>
                         </div>
+                        {% else %}
+                        <div class="mt-2">
+                            <p class="text-muted small mb-0"><i class="fas fa-info-circle me-1"></i> You'll be able to create a schedule after saving the candidate.</p>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <!-- Current Balance (for edit mode) - Detailed View -->
