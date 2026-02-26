@@ -292,8 +292,8 @@
                 </a>
                 {% endif %}
                 
-                <!-- Placements - staff can view -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
+                <!-- Placements - HIDDEN FROM STAFF -->
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' %}
                 <a href="{% url 'placement_list' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-briefcase me-2"></i>Placements
                 </a>
