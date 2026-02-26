@@ -223,6 +223,30 @@
         .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: 36px;
         }
+        
+        /* Message alerts styling */
+        .alert {
+            border-left-width: 4px;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            padding: 1rem 1.5rem;
+        }
+        .alert-success {
+            border-left-color: var(--success);
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+        .alert-error, .alert-danger {
+            border-left-color: var(--danger);
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+        .alert-warning {
+            border-left-color: var(--warning);
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+        .alert-info {
+            border-left-color: var(--info);
+            background-color: rgba(23, 162, 184, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -292,10 +316,10 @@
                 </a>
                 {% endif %}
                 
-<!-- PAYMENTS SECTION -->
-<div class="sidebar-heading small text-uppercase text-white-50 px-3 mt-3 mb-2">
-    <i class="fas fa-money-bill-wave me-2"></i>PAYMENTS
-</div>
+                <!-- PAYMENTS SECTION -->
+                <div class="sidebar-heading small text-uppercase text-white-50 px-3 mt-3 mb-2">
+                    <i class="fas fa-money-bill-wave me-2"></i>PAYMENTS
+                </div>
 
                 <!-- Candidate Payments - staff and above -->
                 {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
@@ -304,7 +328,7 @@
                 </a>
                 {% endif %}
 
-                <!-- Create Payment Schedule - staff and above (NEW) -->
+                <!-- Create Payment Schedule - staff and above -->
                 {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
                 <a href="{% url 'payment_list' %}?payment_plan=installment" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-calendar-alt me-2"></i>Create Schedule
@@ -473,10 +497,22 @@
             </nav>
             
             <div class="container-fluid px-4">
+                <!-- Messages with improved styling -->
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
-                            {{ message }}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3 shadow-sm" role="alert">
+                            <div class="d-flex align-items-center">
+                                {% if message.tags == 'success' %}
+                                    <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
+                                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                                    <i class="fas fa-exclamation-circle text-danger me-3 fa-lg"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle text-warning me-3 fa-lg"></i>
+                                {% elif message.tags == 'info' %}
+                                    <i class="fas fa-info-circle text-info me-3 fa-lg"></i>
+                                {% endif %}
+                                <div>{{ message }}</div>
+                            </div>
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     {% endfor %}
@@ -501,14 +537,14 @@
             $("#wrapper").toggleClass("toggled");
         });
         
-        // Auto-hide alerts after 5 seconds
+        // Auto-hide alerts after 8 seconds
         setTimeout(function() {
             var alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert) {
                 var bsAlert = new bootstrap.Alert(alert);
                 bsAlert.close();
             });
-        }, 5000);
+        }, 8000);
         
         // Initialize tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))

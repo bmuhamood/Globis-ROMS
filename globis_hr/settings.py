@@ -138,6 +138,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+handler403 = 'apps.accounts.views.custom_403_view'
+handler404 = 'apps.accounts.views.custom_404_view'
+handler500 = 'apps.accounts.views.custom_500_view'
+
 # Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Kampala'

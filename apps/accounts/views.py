@@ -7,7 +7,6 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Sum
 from django.utils import timezone
 from datetime import timedelta, datetime
-
 from .models import UserProfile, ActivityLog, log_activity
 from .decorators import admin_required, permission_required, role_required
 from apps.agents.models import Agent
@@ -446,6 +445,25 @@ def activity_logs(request):
     return render(request, 'accounts/activity_logs.html', context)
 
 # ==================== PROFILE VIEW ====================
+
+def custom_403_view(request, exception=None):
+    """Custom 403 forbidden page"""
+    return render(request, '403.html', status=403)
+
+def custom_404_view(request, exception=None):
+    """Custom 404 not found page"""
+    return render(request, '404.html', status=404)
+
+def custom_500_view(request):
+    """Custom 500 server error page"""
+    return render(request, '500.html', status=500)
+
+@login_required
+def permission_denied(request):
+    """View for when user lacks permission"""
+    return render(request, '403.html', {
+        'message': "You don't have permission to access this page."
+    })
 
 @login_required
 def profile(request):
