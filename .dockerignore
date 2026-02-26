@@ -1,0 +1,45 @@
+# Create this file to exclude unnecessary files
+cat > .dockerignore << 'EOF'
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+htmlcov
+
+# Environments
+.env
+.venv
+env
+venv
+ENV
+env.bak
+venv.bak
+
+# Database
+*.sqlite3
+*.db
+
+# Git
+.git
+.gitignore
+.github
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Local files
+.DS_Store
+docker-compose*.yml
+README.md
+EOF
