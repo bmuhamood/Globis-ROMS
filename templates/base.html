@@ -258,10 +258,12 @@
                 <i class="fas fa-users me-2"></i>Globis HR
             </div>
             <div class="list-group list-group-flush my-3">
-                <!-- Dashboard - all users -->
+                <!-- Dashboard - all users EXCEPT staff -->
+                {% if user_role != 'staff' %}
                 <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action">
                     <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                 </a>
+                {% endif %}
                 
                 <!-- RECRUITMENT SECTION -->
                 <div class="sidebar-heading small text-uppercase text-white-50 px-3 mt-3 mb-2">
@@ -276,21 +278,21 @@
                     {% endif %}
                 </a>
                 
-                <!-- Clients - staff and above -->
+                <!-- Clients - staff can view -->
                 {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
                 <a href="{% url 'client_list' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-building me-2"></i>Clients
                 </a>
                 {% endif %}
                 
-                <!-- Agents - staff and above -->
+                <!-- Agents - staff can view -->
                 {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
                 <a href="{% url 'agent_list' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-handshake me-2"></i>Agents
                 </a>
                 {% endif %}
                 
-                <!-- Placements - staff and above -->
+                <!-- Placements - staff can view -->
                 {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
                 <a href="{% url 'placement_list' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-briefcase me-2"></i>Placements
@@ -316,31 +318,33 @@
                 </a>
                 {% endif %}
                 
-                <!-- PAYMENTS SECTION -->
+                <!-- PAYMENTS SECTION - COMPLETELY HIDDEN FROM STAFF -->
+                {% if user_role != 'staff' %}
                 <div class="sidebar-heading small text-uppercase text-white-50 px-3 mt-3 mb-2">
                     <i class="fas fa-money-bill-wave me-2"></i>PAYMENTS
                 </div>
 
-                <!-- Candidate Payments - staff and above -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
+                <!-- Candidate Payments - all non-staff roles -->
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' %}
                 <a href="{% url 'payment_list' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-money-bill-wave me-2"></i>Candidate Payments
                 </a>
                 {% endif %}
 
-                <!-- Create Payment Schedule - staff and above -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
+                <!-- Create Payment Schedule - all non-staff roles -->
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' %}
                 <a href="{% url 'payment_list' %}?payment_plan=installment" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-calendar-alt me-2"></i>Create Schedule
                 </a>
                 {% endif %}
 
-                <!-- Loan Payment Tracking - staff and above -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
+                <!-- Loan Payment Tracking - all non-staff roles -->
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' %}
                 <a href="{% url 'payment_list' %}?payment_plan=loan" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-hand-holding-usd me-2"></i>Loan Tracking
                 </a>
                 {% endif %}
+                {% endif %} <!-- End PAYMENTS SECTION -->
                 
                 <!-- FINANCE SECTION - HIDDEN FROM STAFF -->
                 {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' %}
@@ -359,66 +363,68 @@
                 </a>
                 {% endif %}
                 
-                <!-- REPORTS SECTION -->
+                <!-- REPORTS SECTION - HIDDEN FROM STAFF -->
+                {% if user_role != 'staff' %}
                 <div class="sidebar-heading small text-uppercase text-white-50 px-3 mt-3 mb-2">
                     <i class="fas fa-print me-2"></i>REPORTS
                 </div>
 
                 <!-- All Reports - main report page -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' or user_role == 'agent' %}
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' or user_role == 'agent' %}
                 <a href="{% url 'report_list' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-print me-2"></i>All Reports
                 </a>
                 {% endif %}
 
                 <!-- Candidate Report -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' or user_role == 'agent' %}
                 <a href="{% url 'candidate_report' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-user-graduate me-2"></i>Candidate Report
                 </a>
                 {% endif %}
 
                 <!-- Client Report -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' or user_role == 'agent' %}
                 <a href="{% url 'client_report' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-building me-2"></i>Client Report
                 </a>
                 {% endif %}
 
                 <!-- Agent Report -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' or user_role == 'agent' %}
                 <a href="{% url 'agent_report' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-handshake me-2"></i>Agent Report
                 </a>
                 {% endif %}
 
                 <!-- Missing Documents Report -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' or user_role == 'agent' %}
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' or user_role == 'agent' %}
                 <a href="{% url 'missing_documents_report' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-file-alt me-2"></i>Missing Documents
                 </a>
                 {% endif %}
 
                 <!-- Visa Status Report -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' or user_role == 'agent' %}
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' or user_role == 'agent' %}
                 <a href="{% url 'visa_status_report' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-passport me-2"></i>Visa Status
                 </a>
                 {% endif %}
                 
-                <!-- Payment Reports - staff and above -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
+                <!-- Payment Reports -->
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' %}
                 <a href="{% url 'payment_report' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-file-invoice me-2"></i>Payment Reports
                 </a>
                 {% endif %}
                 
-                <!-- Loan Reports - staff and above -->
-                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'staff' or user_role == 'finance' %}
+                <!-- Loan Reports -->
+                {% if user_role == 'admin' or user_role == 'manager' or user_role == 'finance' %}
                 <a href="{% url 'loan_report' %}" class="list-group-item list-group-item-action ps-4">
                     <i class="fas fa-file-invoice-dollar me-2"></i>Loan Reports
                 </a>
                 {% endif %}
+                {% endif %} <!-- End REPORTS SECTION -->
                 
                 <!-- IMPORT/EXPORT SECTION -->
                 {% if user_role == 'admin' or user_role == 'manager' %}
@@ -491,7 +497,10 @@
                             <i class="fas fa-user-circle text-primary"></i> {{ user.username }}
                             <span class="badge bg-info ms-2">{{ user_role|title }}</span>
                         </span>
+                        <!-- Hide cash amount from staff -->
+                        {% if user_role != 'staff' %}
                         <span class="badge bg-success">UGX {{ cash_in_hand|floatformat:2|default:"0" }}</span>
+                        {% endif %}
                     </div>
                 </div>
             </nav>
