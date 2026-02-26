@@ -21,10 +21,20 @@ env = environ.Env(
     DATABASE_URL=(str, f'sqlite:///{BASE_DIR}/db.sqlite3'),
 )
 
-# Read .env file if it exists
-env_file = BASE_DIR / '.env'
-if env_file.exists():
-    env.read_env(str(env_file))
+# Check for mounted secrets in Cloud Run (most important fix!)
+secrets_path = '/secrets/django-settings'
+if os.path.exists(secrets_path):
+    # In Cloud Run, secrets are mounted as files
+    env.read_env(secrets_path)
+    print(f"Loaded secrets from {secrets_path}")
+else:
+    # Local development - read from .env file
+    env_file = BASE_DIR / '.env'
+    if env_file.exists():
+        env.read_env(str(env_file))
+        print(f"Loaded secrets from {env_file}")
+    else:
+        print("No secret file found, using environment variables")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
@@ -42,6 +52,7 @@ if 'K_SERVICE' in os.environ:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    print(f"Running on Cloud Run service: {os.environ.get('K_SERVICE')}")
 
 # Application definition
 INSTALLED_APPS = [
@@ -156,8 +167,13 @@ SESSION_COOKIE_AGE = 1209600
 SESSION_COOKIE_NAME = 'globis_session'
 SESSION_SAVE_EVERY_REQUEST = True
 
-# Email settings (optional - remove if not needed)
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development
+# Email settings (optional)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
 
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
