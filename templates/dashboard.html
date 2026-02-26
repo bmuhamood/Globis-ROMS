@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<!-- Only show dashboard content if user is not staff -->
+{% if user_role != 'staff' %}
 <div class="row mt-4">
     <div class="col-12">
         <h2 class="text-secondary"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
@@ -358,4 +360,34 @@
         },
     });
 </script>
+
+<!-- If user is staff, show access denied message -->
+{% else %}
+<div class="row mt-5">
+    <div class="col-md-6 mx-auto text-center">
+        <div class="card shadow border-warning">
+            <div class="card-header bg-warning text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Access Denied</h4>
+            </div>
+            <div class="card-body p-5">
+                <i class="fas fa-lock fa-4x text-warning mb-4"></i>
+                <h3 class="text-warning">Dashboard Restricted</h3>
+                <p class="text-muted mb-4">Staff users do not have access to the dashboard.</p>
+                <p class="text-muted small">Please use the navigation menu to access your permitted sections:</p>
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    <a href="{% url 'candidate_list' %}" class="btn btn-primary">
+                        <i class="fas fa-user-graduate me-2"></i>Candidates
+                    </a>
+                    <a href="{% url 'client_list' %}" class="btn btn-info">
+                        <i class="fas fa-building me-2"></i>Clients
+                    </a>
+                    <a href="{% url 'document_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-file-alt me-2"></i>Documents
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
