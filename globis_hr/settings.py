@@ -8,6 +8,7 @@ from pathlib import Path
 from django.core.management.utils import get_random_secret_key
 import environ
 import dj_database_url
+import logging
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,14 +22,12 @@ env = environ.Env(
     DATABASE_URL=(str, f'sqlite:///{BASE_DIR}/db.sqlite3'),
 )
 
-# Check for mounted secrets in Cloud Run (most important fix!)
+# Check for mounted secrets in Cloud Run
 secrets_path = '/secrets/django-settings'
 if os.path.exists(secrets_path):
-    # In Cloud Run, secrets are mounted as files
     env.read_env(secrets_path)
     print(f"Loaded secrets from {secrets_path}")
 else:
-    # Local development - read from .env file
     env_file = BASE_DIR / '.env'
     if env_file.exists():
         env.read_env(str(env_file))
@@ -184,11 +183,37 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
 
-# File upload settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
-FILE_UPLOAD_PERMISSIONS = 0o644
-
 # Performance settings
 if not DEBUG:
     DATABASES['default']['CONN_MAX_AGE'] = 600
+
+# ========== FIX FOR PYTHON 3.14 RECURSION ERROR ==========
+# Fix logging recursion issue in Python 3.14
+logging.basicConfig(force=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    # Prevent recursive logging
+    'incremental': True,
+}
