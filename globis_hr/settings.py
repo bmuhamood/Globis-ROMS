@@ -46,12 +46,26 @@ CSRF_TRUSTED_ORIGINS = env('CSRF_TRUSTED_ORIGINS')
 
 # Cloud Run specific settings
 if 'K_SERVICE' in os.environ:
+    # Add .run.app domain to allowed hosts
     ALLOWED_HOSTS.append('.run.app')
+    
+    # Add your specific Cloud Run URL to CSRF trusted origins
+    current_url = f"https://{os.environ.get('K_SERVICE')}-{os.environ.get('RUN_ID', '')}.run.app"
+    CSRF_TRUSTED_ORIGINS.append(current_url)
+    CSRF_TRUSTED_ORIGINS.append('https://*.run.app')
+    
+    # Security settings for Cloud Run
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = False  # Important: Must be False for CSRF token to work with AJAX
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    CSRF_USE_SESSIONS = False  # Use cookies instead of sessions for CSRF
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    
     print(f"Running on Cloud Run service: {os.environ.get('K_SERVICE')}")
+    print(f"CSRF Trusted Origins: {CSRF_TRUSTED_ORIGINS}")
 
 # Application definition
 INSTALLED_APPS = [
@@ -84,7 +98,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',  # This must be here
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',

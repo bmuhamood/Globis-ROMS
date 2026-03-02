@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Count, Sum
+from django.db.models import Q, Count, Sum
 from django.utils import timezone
 from datetime import timedelta, datetime
 from .models import UserProfile, ActivityLog, log_activity
@@ -17,10 +17,18 @@ from apps.visa_process.models import VisaProcess
 from apps.candidate_payments.models import CandidatePayment
 from apps.placements.models import Placement
 from apps.finance.models import Income, Expense
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.debug import sensitive_post_parameters
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 
 # ==================== AUTHENTICATION VIEWS ====================
 
+@sensitive_post_parameters()
+@ensure_csrf_cookie
+@never_cache
 def login_view(request):
+    """Enhanced login view with CSRF token handling"""
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -40,7 +48,9 @@ def login_view(request):
         else:
             messages.error(request, 'Invalid username or password.')
     
-    return render(request, 'accounts/login.html')
+    # Ensure CSRF token is set even for GET requests
+    response = render(request, 'accounts/login.html')
+    return response
 
 def logout_view(request):
     if request.user.is_authenticated:
