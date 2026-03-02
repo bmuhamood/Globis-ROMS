@@ -26,17 +26,32 @@ class PlacementAdmin(admin.ModelAdmin):
     )
     
     def placement_fee_display(self, obj):
-        return format_html('UGX {:,.0f}', obj.placement_fee)
+        """Display placement fee formatted"""
+        try:
+            # Convert to float first, then format
+            fee_value = float(obj.placement_fee) if obj.placement_fee else 0
+            formatted_fee = "{:,.0f}".format(fee_value)
+            return format_html('UGX {}', formatted_fee)
+        except (TypeError, ValueError, AttributeError):
+            return format_html('UGX 0')
     placement_fee_display.short_description = 'Fee'
     
     def payment_status_badge(self, obj):
         """Show payment status with color"""
-        colors = {
-            'paid': 'green',
-            'partial': 'orange',
-            'pending': 'red'
-        }
-        color = colors.get(obj.payment_status, 'gray')
-        return format_html('<span style="color: {}; font-weight: bold;">●</span> {}',
-                          color, obj.get_payment_status_display())
+        try:
+            colors = {
+                'paid': 'green',
+                'partial': 'orange',
+                'pending': 'red'
+            }
+            color = colors.get(obj.payment_status, 'gray')
+            status_display = obj.get_payment_status_display() if hasattr(obj, 'get_payment_status_display') else str(obj.payment_status)
+            return format_html('<span style="color: {}; font-weight: bold;">●</span> {}',
+                              color, status_display)
+        except (AttributeError, ValueError):
+            return '-'
     payment_status_badge.short_description = 'Status'
+    
+    def get_queryset(self, request):
+        """Optimize queryset with select_related"""
+        return super().get_queryset(request).select_related('candidate', 'client')

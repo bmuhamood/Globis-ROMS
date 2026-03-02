@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -8,6 +9,10 @@ import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
 from django.db import transaction
+from django.utils import timezone
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import os
 
 @login_required
 def payment_list(request):
@@ -212,3 +217,126 @@ def create_payment_schedule(request, candidate_id):
             messages.error(request, f'Error creating payment schedule: {str(e)}')
     
     return render(request, 'payments/create_schedule.html', {'candidate': candidate})
+
+@login_required
+@transaction.atomic
+def payment_edit(request, pk):
+    payment = get_object_or_404(CandidatePayment, pk=pk)
+    candidate = payment.candidate
+    
+    if request.method == 'POST':
+        try:
+            # Store old values for logging
+            old_amount = payment.amount
+            old_type = payment.payment_type
+            old_method = payment.payment_method
+            
+            # Update payment details
+            amount = Decimal(request.POST.get('amount'))
+            payment_type = request.POST.get('payment_type')
+            payment_method = request.POST.get('payment_method')
+            payment_date = request.POST.get('date')
+            remarks = request.POST.get('remarks', '')
+            
+            # Validate amount doesn't exceed candidate's total required amount
+            if amount > candidate.initial_amount:
+                messages.error(request, f'Payment amount (UGX {amount:,.0f}) exceeds required amount (UGX {candidate.initial_amount:,.0f})')
+                return redirect('payment_edit', pk=pk)
+            
+            # Calculate new balances
+            previous_balance = candidate.remaining_balance + old_amount - amount
+            
+            # Update payment
+            payment.amount = amount
+            payment.payment_type = payment_type
+            payment.payment_method = payment_method
+            payment.date = payment_date
+            payment.remarks = remarks
+            payment.previous_balance = previous_balance
+            payment.new_balance = previous_balance - amount
+            payment.save()
+            
+            # Update candidate's balance
+            candidate.update_balance()
+            
+            messages.success(
+                request, 
+                f'Payment updated successfully! New amount: UGX {amount:,.0f}'
+            )
+            
+            return redirect('payment_list')
+            
+        except Exception as e:
+            messages.error(request, f'Error updating payment: {str(e)}')
+    
+    # GET request - show form with existing data
+    candidates = Candidate.objects.all().order_by('full_name')
+    
+    return render(request, 'payments/form.html', {
+        'payment': payment,
+        'candidates': candidates,
+        'selected_candidate': candidate,
+        'is_edit': True
+    })
+
+@login_required
+@transaction.atomic
+def payment_receipt_upload(request, pk):
+    payment = get_object_or_404(CandidatePayment, pk=pk)
+    
+    if request.method == 'POST' and request.FILES.get('receipt_file'):
+        try:
+            receipt_file = request.FILES['receipt_file']
+            
+            # Validate file size (2MB max)
+            if receipt_file.size > 2 * 1024 * 1024:
+                messages.error(request, 'File size exceeds 2MB limit.')
+                return redirect('payment_list')
+            
+            # Validate file type
+            allowed_types = ['pdf', 'jpg', 'jpeg', 'png']
+            file_ext = receipt_file.name.split('.')[-1].lower()
+            if file_ext not in allowed_types:
+                messages.error(request, 'Only PDF, JPG, and PNG files are allowed.')
+                return redirect('payment_list')
+            
+            # Delete old receipt file if exists
+            if payment.receipt_file:
+                if default_storage.exists(payment.receipt_file.name):
+                    default_storage.delete(payment.receipt_file.name)
+            
+            # Save new receipt
+            filename = f"receipt_{payment.receipt_number}_{payment.candidate.passport_no}.{file_ext}"
+            payment.receipt_file.save(filename, receipt_file)
+            payment.receipt_uploaded_at = timezone.now()
+            payment.save()
+            
+            messages.success(request, f'Receipt uploaded successfully for {payment.receipt_number}')
+            
+        except Exception as e:
+            messages.error(request, f'Error uploading receipt: {str(e)}')
+    
+    return redirect('payment_list')
+
+@login_required
+def payment_receipt_download(request, pk):
+    payment = get_object_or_404(CandidatePayment, pk=pk)
+    
+    if not payment.receipt_file:
+        messages.error(request, 'No receipt file found.')
+        return redirect('payment_list')
+    
+    try:
+        file_path = payment.receipt_file.path
+        if os.path.exists(file_path):
+            with open(file_path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/octet-stream')
+                filename = f"receipt_{payment.receipt_number}_{payment.candidate.passport_no}.pdf"
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                return response
+        else:
+            messages.error(request, 'Receipt file not found on server.')
+    except Exception as e:
+        messages.error(request, f'Error downloading receipt: {str(e)}')
+    
+    return redirect('payment_list')

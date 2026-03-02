@@ -35,14 +35,26 @@
                             <input type="text" class="form-control" id="full_name" name="full_name" 
                                    value="{{ candidate.full_name|default:'' }}" required>
                         </div>
-                        <div class="col-md-6">
-                            <label for="passport_no" class="form-label">Passport Number *</label>
-                            <input type="text" class="form-control" id="passport_no" name="passport_no" 
-                                   value="{{ candidate.passport_no|default:'' }}" {% if candidate %}readonly{% endif %} required>
-                            {% if candidate %}
-                            <small class="text-muted">Passport number cannot be changed</small>
-                            {% endif %}
-                        </div>
+                            <div class="col-md-6">
+                                <label for="passport_no" class="form-label">Passport Number *</label>
+                                <input type="text" class="form-control" id="passport_no" name="passport_no" 
+                                    value="{{ candidate.passport_no|default:'' }}" 
+                                    {% if not can_edit %}readonly{% endif %} 
+                                    required 
+                                    pattern="[A-Za-z0-9]+" 
+                                    title="Passport number must be unique and contain only letters and numbers">
+                                {% if can_edit %}
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Passport number must be unique in the system
+                                </small>
+                                {% else %}
+                                <small class="text-muted">
+                                    <i class="fas fa-lock me-1"></i>
+                                    Passport number cannot be changed - you don't have edit permission
+                                </small>
+                                {% endif %}
+                            </div>
                     </div>
                     
                     <div class="row mb-3">

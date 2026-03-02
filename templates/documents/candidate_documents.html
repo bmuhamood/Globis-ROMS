@@ -1,0 +1,898 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Documents - {{ candidate.full_name }}
+                </h4>
+                <p class="text-muted small mb-0">
+                    Passport: {{ candidate.passport_no }} | 
+                    Position: {{ candidate.position }}
+                </p>
+            </div>
+            <div>
+                <a href="{% url 'candidate_detail' candidate.id %}" class="btn btn-info btn-sm">
+                    <i class="fas fa-user me-2"></i>View Candidate
+                </a>
+                <a href="{% url 'candidate_list' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Stats -->
+<div class="row mt-3">
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Uploaded</div>
+                        <div class="h4 fw-bold mb-0">{{ uploaded_count }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-check-circle text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">Required</div>
+                        <div class="h4 fw-bold mb-0">{{ total_required }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-file text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-danger border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-danger text-uppercase mb-0">Missing</div>
+                        <div class="h4 fw-bold mb-0">{{ missing_types|length }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-danger bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-exclamation-triangle text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Progress</div>
+                        <div class="h4 fw-bold mb-0">
+                            {% widthratio uploaded_count total_required 100 %}%
+                        </div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-chart-pie text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Section -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold small">
+                    <i class="fas fa-upload me-2 text-primary"></i>Upload Multiple Documents
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="alert alert-info py-2 mb-0 small">
+                            <i class="fas fa-info-circle me-2"></i>
+                            You can upload multiple documents at once. Click on any file to preview before uploading.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- File Selection Area -->
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label small fw-semibold">Choose Files</label>
+                        <div class="input-group input-group-sm">
+                            <input type="file" class="form-control form-control-sm" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp">
+                            <button class="btn btn-primary btn-sm" id="prepareBtn" onclick="prepareUpload()">
+                                <i class="fas fa-list me-1"></i>Prepare Upload
+                            </button>
+                        </div>
+                        <small class="text-muted">Supported: PDF, JPG, PNG (Max 10MB each)</small>
+                    </div>
+                </div>
+                
+                <!-- Files List with Document Type Selection and Preview -->
+                <div id="filesListContainer" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="small fw-bold mb-0">Select Document Type for Each File:</h6>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-2" onclick="selectAllType('passport')">
+                                <i class="fas fa-passport me-1"></i>All Passport
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary me-2" onclick="selectAllType('medical')">
+                                <i class="fas fa-file-medical me-1"></i>All Medical
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="selectAllType('other')">
+                                <i class="fas fa-file me-1"></i>All Other
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- File Preview Cards -->
+                    <div class="row g-2 mb-3" id="filePreviewCards">
+                        <!-- Preview cards will be added here dynamically -->
+                    </div>
+                    
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered">
+                            <thead class="bg-light sticky-top">
+                                <tr>
+                                    <th class="px-2 py-1 small" width="5%">#</th>
+                                    <th class="px-2 py-1 small" width="35%">File Name</th>
+                                    <th class="px-2 py-1 small" width="30%">Document Type</th>
+                                    <th class="px-2 py-1 small" width="10%">Size</th>
+                                    <th class="px-2 py-1 small text-center" width="10%">Preview</th>
+                                    <th class="px-2 py-1 small text-center" width="10%">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filesList">
+                                <!-- Files will be added here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <div>
+                            <span class="small text-muted">Total files: <span id="totalFilesCount">0</span></span>
+                        </div>
+                        <div>
+                            <button class="btn btn-success btn-sm" id="uploadAllBtn" onclick="uploadAllFiles()">
+                                <i class="fas fa-cloud-upload-alt me-1"></i>Upload All Files
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="resetUpload()">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Upload Progress -->
+                <div id="uploadProgress" class="mt-3" style="display: none;">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span>Uploading files... <span id="uploadStatus"></span></span>
+                        <span id="uploadPercent">0%</span>
+                    </div>
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             id="progressBar" style="width: 0%;"></div>
+                    </div>
+                    <div id="uploadDetails" class="small text-muted mt-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Missing Documents Alert -->
+{% if missing_types %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="alert alert-warning py-2 mb-0">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Missing Documents:</strong>
+                {% for type in missing_types %}
+                <span class="badge bg-warning text-dark ms-2">{{ type.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Uploaded Documents Table with Preview -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small">
+                    <i class="fas fa-file-alt me-2 text-primary"></i>Uploaded Documents
+                </h6>
+                <div>
+                    <!-- Bulk Delete Button -->
+                    <button class="btn btn-danger btn-sm me-2" id="bulkDeleteBtn" onclick="bulkDelete()" style="display: none;">
+                        <i class="fas fa-trash-alt me-1"></i>Delete Selected (<span id="selectedCount">0</span>)
+                    </button>
+                    {% if documents %}
+                    <button class="btn btn-success btn-sm me-2" onclick="mergeDocuments()">
+                        <i class="fas fa-file-pdf me-1"></i>Merge to PDF
+                    </button>
+                    {% endif %}
+                    <span class="badge bg-primary">{{ documents|length }} Files</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2 text-center" width="5%">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAll" onclick="toggleSelectAll(this)">
+                                    </div>
+                                </th>
+                                <th class="px-2 py-2" width="8%">Preview</th>
+                                <th class="px-2 py-2" width="10%">Type</th>
+                                <th class="px-2 py-2" width="30%">Filename</th>
+                                <th class="px-2 py-2" width="8%">Size</th>
+                                <th class="px-2 py-2" width="12%">Uploaded By</th>
+                                <th class="px-2 py-2" width="12%">Date</th>
+                                <th class="px-2 py-2 text-center" width="15%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documentList">
+                            {% for doc in documents %}
+                            <tr id="doc-row-{{ doc.id }}">
+                                <td class="px-2 text-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input doc-checkbox" type="checkbox" value="{{ doc.id }}" onchange="updateSelectedCount()">
+                                    </div>
+                                </td>
+                                <td class="px-2">
+                                    <div class="document-thumbnail" onclick="showDocumentPreview('{{ doc.id }}', '{{ doc.file.url }}', '{{ doc.file_type }}')">
+                                        {% if doc.file_type == 'pdf' %}
+                                        <i class="fas fa-file-pdf text-danger fs-4"></i>
+                                        {% elif doc.file_type in 'jpg,jpeg,png,gif,bmp' %}
+                                        <img src="{{ doc.file.url }}" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;">
+                                        {% else %}
+                                        <i class="fas fa-file-word text-info fs-4"></i>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-2">
+                                    <span class="badge bg-info">{{ doc.document_type.name }}</span>
+                                    {% if doc.version > 1 %}
+                                    <span class="badge bg-secondary">v{{ doc.version }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2">
+                                    <span class="filename-text" title="{{ doc.original_filename }}">{{ doc.original_filename|truncatechars:25 }}</span>
+                                </td>
+                                <td class="px-2">{{ doc.get_file_size_display }}</td>
+                                <td class="px-2">{{ doc.uploaded_by.username }}</td>
+                                <td class="px-2">{{ doc.uploaded_at|date:"m/d/y H:i" }}</td>
+                                <td class="px-2 text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-info" onclick="showDocumentPreview('{{ doc.id }}', '{{ doc.file.url }}', '{{ doc.file_type }}')" title="Quick Preview">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                        <a href="{% url 'view_document' doc.id %}" class="btn btn-outline-info" target="_blank" title="Full View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'download_document' doc.id %}" class="btn btn-outline-success" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <form method="POST" action="{% url 'delete_document' doc.id %}" style="display: inline;" 
+                                              onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-file-alt fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No documents uploaded yet</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Merged PDF Section -->
+{% if merged_doc %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm border-success">
+            <div class="card-header bg-success text-white py-2">
+                <h6 class="mb-0 fw-bold small">
+                    <i class="fas fa-file-pdf me-2"></i>Merged Document
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-file-pdf fa-2x text-danger me-3"></i>
+                        <div>
+                            <span class="fw-semibold">{{ candidate.full_name }} - {{ candidate.passport_no }}</span>
+                            <br>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>Merged: {{ merged_doc.created_at|date:"M d, Y H:i" }}
+                                {% if merged_doc.created_by %}
+                                | <i class="fas fa-user me-1"></i>{{ merged_doc.created_by.username }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="{% url 'download_merged' candidate.id %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-download me-1"></i>Download PDF
+                        </a>
+                        <button class="btn btn-outline-success btn-sm ms-2" onclick="mergeDocuments()" title="Re-merge documents">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-2 small text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Filename: {{ candidate.passport_no }}_{{ candidate.full_name|slugify }}_documents.pdf
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Document Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title" id="previewModalLabel">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Document Preview
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-2 text-center" id="previewContent" style="min-height: 400px; max-height: 600px; overflow: auto;">
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <div class="spinner-border text-primary" role="status" id="previewSpinner">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <div class="d-flex justify-content-between w-100">
+                    <small class="text-muted" id="previewFileName"></small>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <a href="#" class="btn btn-sm btn-success" id="previewDownloadBtn" target="_blank">
+                            <i class="fas fa-download me-1"></i>Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Form -->
+<form id="bulkDeleteForm" method="POST" action="{% url 'bulk_delete_documents' candidate.id %}" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="document_ids" id="bulkDocumentIds">
+</form>
+
+<!-- Hidden form for merge -->
+<form id="mergeForm" method="POST" action="{% url 'merge_documents' candidate.id %}" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<!-- Document Types as JSON for JavaScript -->
+<script>
+    const documentTypes = [
+        {% for type in document_types %}
+        { id: {{ type.id }}, name: "{{ type.name }}", code: "{{ type.code }}" }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    let filesToUpload = [];
+    let filePreviews = [];
+    
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        filesToUpload = Array.from(e.target.files);
+        generatePreviews();
+    });
+    
+    function generatePreviews() {
+        filePreviews = [];
+        filesToUpload.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                filePreviews[index] = {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    data: e.target.result
+                };
+            };
+            
+            if (file.type.startsWith('image/')) {
+                reader.readAsDataURL(file);
+            } else {
+                filePreviews[index] = {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    data: null
+                };
+            }
+        });
+    }
+    
+    function prepareUpload() {
+        const files = filesToUpload;
+        if (files.length === 0) {
+            alert('Please select files to upload');
+            return;
+        }
+        
+        // Show files list container
+        document.getElementById('filesListContainer').style.display = 'block';
+        document.getElementById('prepareBtn').disabled = true;
+        
+        // Clear previous files list
+        const filesList = document.getElementById('filesList');
+        const previewCards = document.getElementById('filePreviewCards');
+        filesList.innerHTML = '';
+        previewCards.innerHTML = '';
+        
+        // Add each file to the list with preview
+        files.forEach((file, index) => {
+            // Add preview card
+            const cardCol = document.createElement('div');
+            cardCol.className = 'col-md-3 col-6';
+            
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            let previewHtml = '';
+            
+            if (file.type.startsWith('image/')) {
+                previewHtml = `<img src="${filePreviews[index]?.data || ''}" class="card-img-top" style="height: 100px; object-fit: cover;">`;
+            } else if (fileExt === 'pdf') {
+                previewHtml = `<div class="text-center p-3 bg-light"><i class="fas fa-file-pdf text-danger fa-3x"></i></div>`;
+            } else {
+                previewHtml = `<div class="text-center p-3 bg-light"><i class="fas fa-file-word text-info fa-3x"></i></div>`;
+            }
+            
+            cardCol.innerHTML = `
+                <div class="card shadow-sm h-100">
+                    ${previewHtml}
+                    <div class="card-body p-1">
+                        <small class="d-block text-truncate" title="${file.name}">${file.name}</small>
+                        <small class="text-muted">${formatFileSize(file.size)}</small>
+                    </div>
+                </div>
+            `;
+            previewCards.appendChild(cardCol);
+            
+            // Add table row
+            const row = document.createElement('tr');
+            
+            // Index cell
+            const indexCell = document.createElement('td');
+            indexCell.className = 'px-2 py-1 text-center';
+            indexCell.innerText = index + 1;
+            
+            // File name cell
+            const nameCell = document.createElement('td');
+            nameCell.className = 'px-2 py-1';
+            let iconClass = 'fa-file text-secondary';
+            if (fileExt === 'pdf') iconClass = 'fa-file-pdf text-danger';
+            else if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(fileExt)) iconClass = 'fa-file-image text-primary';
+            
+            nameCell.innerHTML = `<i class="fas ${iconClass} me-1"></i><span class="text-truncate d-inline-block" style="max-width: 150px;">${file.name}</span>`;
+            
+            // Document type dropdown cell
+            const typeCell = document.createElement('td');
+            typeCell.className = 'px-2 py-1';
+            let selectHtml = `<select class="form-select form-select-sm" id="fileType_${index}" style="font-size: 0.75rem;" required>`;
+            selectHtml += `<option value="">-- Select --</option>`;
+            
+            documentTypes.forEach(type => {
+                selectHtml += `<option value="${type.id}" data-code="${type.code}">${type.name}</option>`;
+            });
+            
+            selectHtml += `</select>`;
+            typeCell.innerHTML = selectHtml;
+            
+            // File size cell
+            const sizeCell = document.createElement('td');
+            sizeCell.className = 'px-2 py-1';
+            sizeCell.innerText = formatFileSize(file.size);
+            
+            // Preview cell
+            const previewCell = document.createElement('td');
+            previewCell.className = 'px-2 py-1 text-center';
+            if (file.type.startsWith('image/')) {
+                previewCell.innerHTML = `<button class="btn btn-sm btn-outline-info" onclick="showTempPreview(${index})"><i class="fas fa-eye"></i></button>`;
+            } else {
+                previewCell.innerHTML = `<span class="text-muted"><i class="fas fa-eye-slash"></i></span>`;
+            }
+            
+            // Action cell
+            const actionCell = document.createElement('td');
+            actionCell.className = 'px-2 py-1 text-center';
+            actionCell.innerHTML = `<button class="btn btn-sm btn-danger" onclick="removeFile(${index})"><i class="fas fa-times"></i></button>`;
+            
+            row.appendChild(indexCell);
+            row.appendChild(nameCell);
+            row.appendChild(typeCell);
+            row.appendChild(sizeCell);
+            row.appendChild(previewCell);
+            row.appendChild(actionCell);
+            
+            filesList.appendChild(row);
+        });
+        
+        // Update total files count
+        document.getElementById('totalFilesCount').innerText = files.length;
+        
+        // Hide the file input area
+        document.querySelector('.row.mb-3 .col-md-8').style.display = 'none';
+    }
+    
+    function showTempPreview(index) {
+        if (filePreviews[index]?.data) {
+            document.getElementById('previewContent').innerHTML = `<img src="${filePreviews[index].data}" class="img-fluid" style="max-height: 550px;">`;
+            document.getElementById('previewFileName').innerText = filesToUpload[index].name;
+            document.getElementById('previewDownloadBtn').href = filePreviews[index].data;
+            new bootstrap.Modal(document.getElementById('previewModal')).show();
+        }
+    }
+    
+    function showDocumentPreview(docId, fileUrl, fileType) {
+        const previewContent = document.getElementById('previewContent');
+        const spinner = document.getElementById('previewSpinner');
+        const fileName = document.getElementById('previewFileName');
+        const downloadBtn = document.getElementById('previewDownloadBtn');
+        
+        // Show spinner and clear previous content
+        spinner.style.display = 'block';
+        previewContent.innerHTML = '';
+        fileName.innerText = '';
+        downloadBtn.href = '#';
+        
+        // Create new content based on file type
+        let content = '';
+        
+        if (fileType === 'pdf') {
+            content = `<iframe src="${fileUrl}" style="width:100%; height:550px;" frameborder="0"></iframe>`;
+        } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(fileType)) {
+            content = `<img src="${fileUrl}" class="img-fluid" style="max-height: 550px;">`;
+        } else {
+            content = `
+                <div class="text-center p-5">
+                    <i class="fas fa-file-word fa-4x text-info mb-3"></i>
+                    <p>Preview not available for this file type</p>
+                    <a href="${fileUrl}" class="btn btn-sm btn-success" download>Download to View</a>
+                </div>
+            `;
+        }
+        
+        // Set content and hide spinner
+        previewContent.innerHTML = content;
+        fileName.innerText = `Document ID: ${docId}`;
+        downloadBtn.href = fileUrl;
+        spinner.style.display = 'none';
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('previewModal')).show();
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function selectAllType(typeCode) {
+        for (let i = 0; i < filesToUpload.length; i++) {
+            const select = document.getElementById(`fileType_${i}`);
+            if (select) {
+                for (let j = 0; j < select.options.length; j++) {
+                    const option = select.options[j];
+                    if (option.dataset.code === typeCode) {
+                        select.value = option.value;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    function removeFile(index) {
+        filesToUpload.splice(index, 1);
+        filePreviews.splice(index, 1);
+        
+        if (filesToUpload.length === 0) {
+            resetUpload();
+        } else {
+            prepareUpload();
+        }
+    }
+    
+    function resetUpload() {
+        document.getElementById('filesListContainer').style.display = 'none';
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.querySelector('.row.mb-3 .col-md-8').style.display = 'block';
+        document.getElementById('prepareBtn').disabled = false;
+        document.getElementById('fileInput').value = '';
+        filesToUpload = [];
+        filePreviews = [];
+    }
+    
+    function uploadAllFiles() {
+        // Validate that all files have a document type selected
+        for (let i = 0; i < filesToUpload.length; i++) {
+            const typeSelect = document.getElementById(`fileType_${i}`);
+            if (!typeSelect || !typeSelect.value) {
+                alert(`Please select document type for file: ${filesToUpload[i].name}`);
+                return;
+            }
+        }
+        
+        // Show progress
+        document.getElementById('uploadProgress').style.display = 'block';
+        document.getElementById('uploadAllBtn').disabled = true;
+        document.getElementById('prepareBtn').disabled = true;
+        
+        let completed = 0;
+        let successful = 0;
+        let failed = 0;
+        
+        // Upload files one by one
+        uploadNextFile(0);
+        
+        function uploadNextFile(index) {
+            if (index >= filesToUpload.length) {
+                setTimeout(() => {
+                    if (failed === 0) {
+                        alert(`Successfully uploaded ${successful} files.`);
+                        location.reload();
+                    } else {
+                        alert(`Uploaded ${successful} files, ${failed} failed.`);
+                        resetUpload();
+                    }
+                }, 1500);
+                return;
+            }
+            
+            const file = filesToUpload[index];
+            const typeSelect = document.getElementById(`fileType_${index}`);
+            const documentType = typeSelect.value;
+            
+            document.getElementById('uploadStatus').innerHTML = `<b>${file.name}</b> (${index + 1}/${filesToUpload.length})`;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('document_type', documentType);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            
+            fetch('{% url "upload_document" candidate.id %}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                completed++;
+                if (data.success) {
+                    successful++;
+                } else {
+                    failed++;
+                }
+                
+                const percent = Math.round((completed / filesToUpload.length) * 100);
+                document.getElementById('progressBar').style.width = percent + '%';
+                document.getElementById('uploadPercent').innerText = percent + '%';
+                
+                uploadNextFile(index + 1);
+            })
+            .catch(error => {
+                completed++;
+                failed++;
+                uploadNextFile(index + 1);
+            });
+        }
+    }
+    
+    function mergeDocuments() {
+        if (confirm(`Create a merged PDF from all uploaded documents?\n\nFile will be saved as:\n{{ candidate.passport_no }}_{{ candidate.full_name|slugify }}_documents.pdf`)) {
+            document.getElementById('mergeForm').submit();
+        }
+    }
+    
+    // Bulk Delete Functions
+    function toggleSelectAll(selectAllCheckbox) {
+        const checkboxes = document.getElementsByClassName('doc-checkbox');
+        for (let checkbox of checkboxes) {
+            checkbox.checked = selectAllCheckbox.checked;
+        }
+        updateSelectedCount();
+    }
+    
+    function updateSelectedCount() {
+        const checkboxes = document.getElementsByClassName('doc-checkbox');
+        let selectedCount = 0;
+        for (let checkbox of checkboxes) {
+            if (checkbox.checked) {
+                selectedCount++;
+            }
+        }
+        
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        
+        if (selectedCount > 0) {
+            bulkDeleteBtn.style.display = 'inline-block';
+            selectedCountSpan.innerText = selectedCount;
+        } else {
+            bulkDeleteBtn.style.display = 'none';
+        }
+        
+        const selectAll = document.getElementById('selectAll');
+        if (selectAll) {
+            selectAll.checked = selectedCount === checkboxes.length && checkboxes.length > 0;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+        }
+    }
+    
+    function bulkDelete() {
+        const checkboxes = document.getElementsByClassName('doc-checkbox');
+        const selectedIds = [];
+        
+        for (let checkbox of checkboxes) {
+            if (checkbox.checked) {
+                selectedIds.push(checkbox.value);
+            }
+        }
+        
+        if (selectedIds.length === 0) {
+            alert('No documents selected');
+            return;
+        }
+        
+        if (confirm(`Are you sure you want to delete ${selectedIds.length} document(s)?`)) {
+            document.getElementById('bulkDocumentIds').value = selectedIds.join(',');
+            document.getElementById('bulkDeleteForm').submit();
+        }
+    }
+</script>
+
+<style>
+    .btn-group-sm .btn {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.7rem;
+    }
+    .table > :not(caption) > * > * {
+        padding: 0.5rem 0.4rem;
+        font-size: 0.85rem;
+    }
+    .h4 {
+        font-size: 1.2rem;
+    }
+    
+    .btn-group-sm form {
+        display: inline;
+    }
+    
+    .btn-group-sm form button {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    
+    #filesList td {
+        vertical-align: middle;
+    }
+    
+    #filesList select {
+        width: 100%;
+    }
+    
+    .sticky-top {
+        top: 0;
+        z-index: 10;
+    }
+    
+    .table-responsive::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+    
+    .form-check-input {
+        cursor: pointer;
+    }
+    
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .document-thumbnail {
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .document-thumbnail:hover {
+        transform: scale(1.1);
+    }
+    
+    .img-thumbnail {
+        border-radius: 4px;
+    }
+    
+    #filePreviewCards .card {
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    
+    #filePreviewCards .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .modal-lg {
+        max-width: 800px;
+    }
+    
+    .filename-text {
+        max-width: 150px;
+        display: inline-block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+{% endblock %}

@@ -1,38 +1,115 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row mt-4">
+<div class="row mt-3">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
-            <h2 class="text-secondary"><i class="fas fa-money-bill-wave me-2"></i>Candidate Payments</h2>
-            <a href="{% url 'payment_add' %}" class="btn btn-primary">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-money-bill-wave me-2"></i>Candidate Payments</h4>
+                <p class="text-muted small mb-0">Track all candidate payments and receipts</p>
+            </div>
+            <a href="{% url 'payment_add' %}" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus me-2"></i>Record Payment
             </a>
         </div>
-        <p class="text-muted">Track all candidate payments</p>
     </div>
 </div>
 
-<!-- Search and Filter Section -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header" style="background: #0184FC; color: white;">
-                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Search & Filters</h5>
+<!-- Summary Cards - Smaller -->
+<div class="row mt-3">
+    <div class="col-md-3 mb-2">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Total Collections</div>
+                        <div class="h5 fw-bold mb-0">UGX {{ total|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-money-bill-wave text-primary"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <form method="GET" class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Search</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" name="search" placeholder="Name, Passport, Receipt..." value="{{ search_query }}">
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-2">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Today's Payments</div>
+                        <div class="h5 fw-bold mb-0">UGX {{ today_total|default:"0"|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-calendar-day text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-2">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-info text-uppercase mb-0">Transactions</div>
+                        <div class="h5 fw-bold mb-0">{{ payments|length }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-info bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-exchange-alt text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-2">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">Unique Candidates</div>
+                        <div class="h5 fw-bold mb-0">{{ unique_candidates|default:"0" }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-users text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Section - Compact -->
+<div class="row mt-1">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-search me-2"></i>Search & Filters</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Search</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" class="form-control form-control-sm" name="search" placeholder="Name, Passport, Receipt..." value="{{ search_query }}">
                         </div>
                     </div>
                     
                     <div class="col-md-2">
-                        <label class="form-label">Payment Type</label>
-                        <select class="form-select" name="payment_type">
+                        <label class="form-label small mb-0">Payment Type</label>
+                        <select class="form-select form-select-sm" name="payment_type">
                             <option value="">All Types</option>
                             {% for value, label in payment_types %}
                             <option value="{{ value }}" {% if payment_type == value %}selected{% endif %}>{{ label }}</option>
@@ -41,8 +118,8 @@
                     </div>
                     
                     <div class="col-md-2">
-                        <label class="form-label">Payment Method</label>
-                        <select class="form-select" name="payment_method">
+                        <label class="form-label small mb-0">Payment Method</label>
+                        <select class="form-select form-select-sm" name="payment_method">
                             <option value="">All Methods</option>
                             {% for value, label in payment_methods %}
                             <option value="{{ value }}" {% if payment_method == value %}selected{% endif %}>{{ label }}</option>
@@ -51,35 +128,18 @@
                     </div>
                     
                     <div class="col-md-2">
-                        <label class="form-label">From Date</label>
-                        <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                        <label class="form-label small mb-0">From Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_from" value="{{ date_from }}">
                     </div>
                     
                     <div class="col-md-2">
-                        <label class="form-label">To Date</label>
-                        <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                        <label class="form-label small mb-0">To Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_to" value="{{ date_to }}">
                     </div>
                     
-                    <!-- Add filter for payment plan -->
-                    <div class="col-md-2">
-                        <label class="form-label">Payment Plan</label>
-                        <select class="form-select" name="payment_plan">
-                            <option value="">All Plans</option>
-                            <option value="cash" {% if payment_plan == 'cash' %}selected{% endif %}>Cash</option>
-                            <option value="loan" {% if payment_plan == 'loan' %}selected{% endif %}>Loan</option>
-                            <option value="installment" {% if payment_plan == 'installment' %}selected{% endif %}>Installment</option>
-                        </select>
-                    </div>
-                    
-                    <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-filter me-2"></i>Apply Filters
-                        </button>
-                        <a href="{% url 'payment_list' %}" class="btn btn-secondary">
-                            <i class="fas fa-times me-2"></i>Clear
-                        </a>
-                        <button type="button" class="btn btn-info" onclick="exportTableToExcel()">
-                            <i class="fas fa-file-excel me-2"></i>Export
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-filter"></i>
                         </button>
                     </div>
                 </form>
@@ -88,152 +148,259 @@
     </div>
 </div>
 
-<!-- Summary Cards -->
-<div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <h6>Total Collections</h6>
-                <h4>UGX {{ total|floatformat:0 }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <h6>Today's Payments</h6>
-                <h4>UGX {{ today_total|default:"0"|floatformat:0 }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <h6>Total Transactions</h6>
-                <h4>{{ payments.count }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <h6>Unique Candidates</h6>
-                <h4>{{ unique_candidates|default:"0" }}</h4>
-            </div>
-        </div>
+<!-- Quick Action Tabs - Smaller -->
+<div class="row mt-2">
+    <div class="col-12">
+        <ul class="nav nav-pills nav-fill bg-light rounded p-1 small">
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if not filter_type %}active{% endif %}" href="{% url 'payment_list' %}">
+                    <i class="fas fa-list me-1"></i>All
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'today' %}active{% endif %}" href="?date_from={% now 'Y-m-d' %}&date_to={% now 'Y-m-d' %}">
+                    <i class="fas fa-calendar-day me-1"></i>Today
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'week' %}active{% endif %}" href="?date_from={% now 'Y-m-d'|date:'Y-m-d' %}&date_to={% now 'Y-m-d'|date:'Y-m-d' %}">
+                    <i class="fas fa-calendar-week me-1"></i>This Week
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'month' %}active{% endif %}" href="?date_from={% now 'Y-m-01' %}&date_to={% now 'Y-m-d' %}">
+                    <i class="fas fa-calendar-alt me-1"></i>This Month
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'cash' %}active{% endif %}" href="?payment_method=cash">
+                    <i class="fas fa-money-bill-wave me-1"></i>Cash
+                </a>
+            </li>
+        </ul>
     </div>
 </div>
 
-<div class="row mt-4">
+<!-- Payments Table - Smaller Text -->
+<div class="row mt-3">
     <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header" style="background: #5EAAE1; color: white;">
-                <h5 class="mb-0">Payment Records</h5>
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small">
+                    <i class="fas fa-receipt me-2 text-primary"></i>Payment Records
+                </h6>
+                <div>
+                    <button type="button" class="btn btn-outline-info btn-sm me-2" onclick="exportTableToExcel()">
+                        <i class="fas fa-file-excel me-1"></i>Export
+                    </button>
+                    <span class="badge bg-primary">{{ payments|length }} Records</span>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover" id="paymentsTable">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0 small" id="paymentsTable">
+                        <thead class="bg-light">
                             <tr>
-                                <th onclick="sortTable(0)">Receipt # <i class="fas fa-sort ms-1"></i></th>
-                                <th onclick="sortTable(1)">Candidate <i class="fas fa-sort ms-1"></i></th>
-                                <th onclick="sortTable(2)">Type <i class="fas fa-sort ms-1"></i></th>
-                                <th onclick="sortTable(3)">Amount <i class="fas fa-sort ms-1"></i></th>
-                                <th>Previous Balance</th>
-                                <th>New Balance</th>
-                                <th onclick="sortTable(6)">Date <i class="fas fa-sort ms-1"></i></th>
-                                <th>Method</th>
-                                <th>Received By</th>
-                                <th>Actions</th>
+                                <th class="px-2 py-2">Receipt</th>
+                                <th class="px-2 py-2">Receipt File</th>
+                                <th class="px-2 py-2">Candidate</th>
+                                <th class="px-2 py-2 text-end">Amount</th>
+                                <th class="px-2 py-2 text-end">Balance</th>
+                                <th class="px-2 py-2">Date</th>
+                                <th class="px-2 py-2">Method</th>
+                                <th class="px-2 py-2 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for payment in payments %}
                             <tr>
-                                <td><span class="badge bg-info">{{ payment.receipt_number }}</span></td>
-                                <td>
-                                    <a href="{% url 'candidate_detail' payment.candidate.id %}" class="text-decoration-none">
-                                        {{ payment.candidate.full_name }}
-                                    </a>
-                                    <br>
-                                    <small class="text-muted">{{ payment.candidate.passport_no }}</small>
-                                    {% if payment.candidate.payment_plan != 'cash' %}
-                                    <span class="badge {% if payment.candidate.payment_plan == 'loan' %}bg-danger{% else %}bg-warning{% endif %}">
-                                        {{ payment.candidate.get_payment_plan_display }}
+                                <td class="px-2">
+                                    <span class="badge bg-info">{{ payment.receipt_number }}</span>
+                                </td>
+                                <td class="px-2">
+                                    {% if payment.receipt_file %}
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-pdf text-danger me-1"></i>
+                                        <small>{{ payment.receipt_file.name|slice:"-20:" }}</small>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted small">No receipt</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2">
+                                    <div class="d-flex align-items-center">
+                                        <div>
+                                            <a href="{% url 'candidate_detail' payment.candidate.id %}" class="text-decoration-none fw-semibold small">
+                                                {{ payment.candidate.full_name|truncatechars:20 }}
+                                            </a>
+                                            <br>
+                                            <small class="text-muted">{{ payment.candidate.passport_no|truncatechars:12 }}</small>
+                                        </div>
+                                        {% if payment.candidate.payment_plan != 'cash' %}
+                                        <span class="badge {% if payment.candidate.payment_plan == 'loan' %}bg-danger{% else %}bg-warning text-dark{% endif %} ms-2" style="font-size: 0.6rem;">
+                                            {{ payment.candidate.get_payment_plan_display|truncatechars:6 }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-2 text-end fw-bold text-success">UGX {{ payment.amount|floatformat:0 }}</td>
+                                <td class="px-2 text-end">
+                                    <span class="fw-bold {% if payment.new_balance == 0 %}text-success{% else %}text-warning{% endif %}">
+                                        UGX {{ payment.new_balance|floatformat:0 }}
                                     </span>
-                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">Prev: UGX {{ payment.previous_balance|floatformat:0 }}</small>
                                 </td>
-                                <td>{{ payment.get_payment_type_display }}</td>
-                                <td class="fw-bold text-success">UGX {{ payment.amount|floatformat:0 }}</td>
-                                <td class="text-muted">UGX {{ payment.previous_balance|floatformat:0 }}</td>
-                                <td class="fw-bold {% if payment.new_balance == 0 %}text-success{% else %}text-warning{% endif %}">
-                                    UGX {{ payment.new_balance|floatformat:0 }}
+                                <td class="px-2">{{ payment.date|date:"m/d/y" }}</td>
+                                <td class="px-2">
+                                    <span class="badge bg-secondary" style="font-size: 0.6rem;">
+                                        {{ payment.get_payment_method_display|truncatechars:8 }}
+                                    </span>
                                 </td>
-                                <td>{{ payment.date|date:"M d, Y" }}</td>
-                                <td>{{ payment.get_payment_method_display }}</td>
-                                <td>{{ payment.received_by.username }}</td>
-                                <td>
-                                    <a href="{% url 'payment_receipt' payment.id %}" class="btn btn-sm btn-info" target="_blank" title="Print Receipt">
-                                        <i class="fas fa-print"></i>
-                                    </a>
-                                    {% if payment.candidate.payment_plan != 'cash' %}
-                                    <a href="{% url 'loan_payment_history' payment.candidate.id %}" class="btn btn-sm btn-warning" title="Payment History">
-                                        <i class="fas fa-history"></i>
-                                    </a>
-                                    {% endif %}
-                                    <a href="{% url 'payment_add' %}?candidate={{ payment.candidate.id }}" class="btn btn-sm btn-success" title="Add Another Payment">
-                                        <i class="fas fa-plus"></i>
-                                    </a>
+                                <td class="px-2 text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <!-- Receipt Actions -->
+                                        {% if payment.receipt_file %}
+                                        <a href="{% url 'payment_receipt_download' payment.id %}" class="btn btn-outline-success" title="Download Receipt">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <a href="{{ payment.receipt_file.url }}" class="btn btn-outline-info" target="_blank" title="View Receipt">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% else %}
+                                        <button type="button" class="btn btn-outline-primary" title="Upload Receipt" 
+                                                onclick="showUploadModal({{ payment.id }}, '{{ payment.receipt_number }}')">
+                                            <i class="fas fa-upload"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        {% if payment.candidate.payment_plan != 'cash' %}
+                                        <a href="{% url 'loan_payment_history' payment.candidate.id %}" class="btn btn-outline-warning" title="History">
+                                            <i class="fas fa-history"></i>
+                                        </a>
+                                        {% endif %}
+                                        
+                                        <a href="{% url 'payment_add' %}?candidate={{ payment.candidate.id }}" class="btn btn-outline-primary" title="Add Payment">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                        
+                                        <a href="{% url 'payment_edit' payment.id %}" class="btn btn-outline-secondary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        
+                                        <button type="button" class="btn btn-outline-danger" title="Delete" 
+                                                onclick="showDeleteModal({{ payment.id }}, '{{ payment.receipt_number }}', '{{ payment.candidate.full_name|escapejs }}', {{ payment.amount }})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="10" class="text-center py-4">
-                                    <i class="fas fa-info-circle text-muted me-2"></i>
-                                    No payments found
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-receipt fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No payments found</p>
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                
-                <!-- Pagination -->
-                {% if payments.has_other_pages %}
-                <nav class="mt-4">
-                    <ul class="pagination justify-content-center">
+            </div>
+            
+            <!-- Pagination - Smaller -->
+            {% if payments.has_other_pages %}
+            <div class="card-footer bg-white py-2">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
                         {% if payments.has_previous %}
                         <li class="page-item">
                             <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                &laquo; First
+                                <i class="fas fa-angle-double-left"></i>
                             </a>
                         </li>
                         <li class="page-item">
                             <a class="page-link" href="?page={{ payments.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                Previous
+                                <i class="fas fa-angle-left"></i>
                             </a>
                         </li>
                         {% endif %}
                         
                         <li class="page-item active">
-                            <span class="page-link">Page {{ payments.number }} of {{ payments.paginator.num_pages }}</span>
+                            <span class="page-link">{{ payments.number }}/{{ payments.paginator.num_pages }}</span>
                         </li>
                         
                         {% if payments.has_next %}
                         <li class="page-item">
                             <a class="page-link" href="?page={{ payments.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                Next
+                                <i class="fas fa-angle-right"></i>
                             </a>
                         </li>
                         <li class="page-item">
                             <a class="page-link" href="?page={{ payments.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                Last &raquo;
+                                <i class="fas fa-angle-double-right"></i>
                             </a>
                         </li>
                         {% endif %}
                     </ul>
                 </nav>
-                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Upload Receipt Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title" id="uploadModalLabel">
+                    <i class="fas fa-upload me-2"></i>
+                    Upload Receipt
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                {% csrf_token %}
+                <div class="modal-body py-3">
+                    <p class="small mb-2" id="uploadReceiptInfo"></p>
+                    <div class="mb-2">
+                        <label class="form-label small">Select Receipt File</label>
+                        <input type="file" class="form-control form-control-sm" name="receipt_file" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <small class="text-muted">PDF, JPG, PNG (Max 2MB)</small>
+                    </div>
+                </div>
+                <div class="modal-footer py-1">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white py-2">
+                <h6 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirm Delete
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-2">
+                <p class="small mb-1">Delete this payment?</p>
+                <p class="small text-muted mb-0" id="deleteDetails"></p>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="" id="deleteForm" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
             </div>
         </div>
     </div>
@@ -250,45 +417,58 @@
         link.click();
     }
     
-    function sortTable(n) {
-        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-        table = document.getElementById('paymentsTable');
-        switching = true;
-        dir = 'asc';
-        
-        while (switching) {
-            switching = false;
-            rows = table.rows;
-            
-            for (i = 1; i < (rows.length - 1); i++) {
-                shouldSwitch = false;
-                x = rows[i].getElementsByTagName('TD')[n];
-                y = rows[i + 1].getElementsByTagName('TD')[n];
-                
-                if (dir == 'asc') {
-                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                } else if (dir == 'desc') {
-                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (shouldSwitch) {
-                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                switching = true;
-                switchcount++;
-            } else {
-                if (switchcount == 0 && dir == 'asc') {
-                    dir = 'desc';
-                    switching = true;
-                }
-            }
-        }
+    function showUploadModal(paymentId, receiptNumber) {
+        document.getElementById('uploadReceiptInfo').innerHTML = 
+            `Upload receipt for <strong>${receiptNumber}</strong>`;
+        document.getElementById('uploadForm').action = `/payments/${paymentId}/upload-receipt/`;
+        new bootstrap.Modal(document.getElementById('uploadModal')).show();
+    }
+    
+    function showDeleteModal(paymentId, receiptNumber, candidateName, amount) {
+        document.getElementById('deleteDetails').innerHTML = 
+            `<strong>${receiptNumber}</strong> - ${candidateName}<br>UGX ${amount.toLocaleString()}`;
+        document.getElementById('deleteForm').action = `/payments/${paymentId}/delete/`;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
     }
 </script>
+
+<style>
+    .btn-group-sm .btn {
+        padding: 0.15rem 0.25rem;
+        font-size: 0.65rem;
+    }
+    .table > :not(caption) > * > * {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .nav-pills .nav-link {
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+    }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #0184FC, #00016E);
+    }
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h5 {
+        font-size: 1rem;
+    }
+    .small, .form-label {
+        font-size: 0.7rem;
+    }
+    .form-select-sm, .input-group-sm, .form-control-sm {
+        font-size: 0.75rem;
+    }
+    .badge {
+        font-weight: 500;
+    }
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+</style>
 {% endblock %}

@@ -44,14 +44,19 @@ class CandidatePaymentAdmin(admin.ModelAdmin):
     
     def amount_display(self, obj):
         """Display amount formatted"""
-        return format_html('UGX {:,.0f}', obj.amount)
+        # Pre-format the amount and pass as string
+        formatted_amount = "{:,.0f}".format(float(obj.amount))
+        return format_html('UGX {}', formatted_amount)
     amount_display.short_description = 'Amount'
     
     def balance_display(self, obj):
         """Display balance information"""
+        # Pre-format both amounts
+        formatted_prev = "{:,.0f}".format(float(obj.previous_balance))
+        formatted_new = "{:,.0f}".format(float(obj.new_balance))
         return format_html(
-            'Previous: UGX {:,.0f}<br>New: UGX {:,.0f}',
-            obj.previous_balance, obj.new_balance
+            'Previous: UGX {}<br>New: UGX {}',
+            formatted_prev, formatted_new
         )
     balance_display.short_description = 'Balance Change'
     
@@ -59,7 +64,8 @@ class CandidatePaymentAdmin(admin.ModelAdmin):
         """Show balance change with arrow"""
         change = obj.previous_balance - obj.new_balance
         if change > 0:
-            return format_html('<span style="color: green;">↓ UGX {:,.0f}</span>', change)
+            formatted_change = "{:,.0f}".format(float(change))
+            return format_html('<span style="color: green;">↓ UGX {}</span>', formatted_change)
         return '-'
     balance_change.short_description = 'Change'
 
@@ -75,11 +81,15 @@ class PaymentHistoryAdmin(admin.ModelAdmin):
     date_hierarchy = 'due_date'
     
     def amount_due_display(self, obj):
-        return format_html('UGX {:,.0f}', obj.amount_due)
+        # Pre-format the amount
+        formatted_amount = "{:,.0f}".format(float(obj.amount_due))
+        return format_html('UGX {}', formatted_amount)
     amount_due_display.short_description = 'Due'
     
     def amount_paid_display(self, obj):
-        return format_html('UGX {:,.0f}', obj.amount_paid)
+        # Pre-format the amount
+        formatted_amount = "{:,.0f}".format(float(obj.amount_paid))
+        return format_html('UGX {}', formatted_amount)
     amount_paid_display.short_description = 'Paid'
     
     def status_badge(self, obj):
@@ -91,6 +101,7 @@ class PaymentHistoryAdmin(admin.ModelAdmin):
             'pending': 'gray'
         }
         color = colors.get(obj.status, 'gray')
+        # Use string for the color and status
         return format_html('<span style="color: {}; font-weight: bold;">●</span> {}',
                           color, obj.get_status_display())
     status_badge.short_description = 'Status'

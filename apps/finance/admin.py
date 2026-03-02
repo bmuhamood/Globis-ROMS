@@ -26,8 +26,19 @@ class IncomeAdmin(admin.ModelAdmin):
     )
     
     def amount_display(self, obj):
-        return format_html('UGX {:,.0f}', obj.amount)
+        """Display amount formatted"""
+        try:
+            # Convert to float first, then format
+            amount_value = float(obj.amount) if obj.amount else 0
+            formatted_amount = "{:,.0f}".format(amount_value)
+            return format_html('UGX {}', formatted_amount)
+        except (TypeError, ValueError, AttributeError):
+            return format_html('UGX 0')
     amount_display.short_description = 'Amount'
+    
+    def get_queryset(self, request):
+        """Optimize queryset"""
+        return super().get_queryset(request).select_related('client', 'received_by')
 
 class ExpenseAdmin(admin.ModelAdmin):
     """Admin for Expense"""
@@ -54,15 +65,29 @@ class ExpenseAdmin(admin.ModelAdmin):
     )
     
     def amount_display(self, obj):
-        return format_html('UGX {:,.0f}', obj.amount)
+        """Display amount formatted"""
+        try:
+            # Convert to float first, then format
+            amount_value = float(obj.amount) if obj.amount else 0
+            formatted_amount = "{:,.0f}".format(amount_value)
+            return format_html('UGX {}', formatted_amount)
+        except (TypeError, ValueError, AttributeError):
+            return format_html('UGX 0')
     amount_display.short_description = 'Amount'
     
     def receipt_link(self, obj):
         """Link to receipt if exists"""
-        if obj.receipt:
-            return format_html('<a href="{}" target="_blank">View Receipt</a>', obj.receipt.url)
+        try:
+            if obj.receipt and obj.receipt.url:
+                return format_html('<a href="{}" target="_blank">View Receipt</a>', obj.receipt.url)
+        except (AttributeError, ValueError):
+            pass
         return '-'
     receipt_link.short_description = 'Receipt'
+    
+    def get_queryset(self, request):
+        """Optimize queryset"""
+        return super().get_queryset(request).select_related('paid_by')
 
 # Register models
 admin.site.register(Income, IncomeAdmin)

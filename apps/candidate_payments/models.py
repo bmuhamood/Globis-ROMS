@@ -28,6 +28,8 @@ class CandidatePayment(models.Model):
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
     received_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     receipt_number = models.CharField(max_length=50, unique=True, default=uuid.uuid4)
+    receipt_file = models.FileField(upload_to='payment_receipts/', null=True, blank=True)
+    receipt_uploaded_at = models.DateTimeField(null=True, blank=True)
     
     # Balance tracking
     previous_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)

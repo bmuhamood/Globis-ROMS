@@ -80,51 +80,112 @@ class CandidateAdmin(admin.ModelAdmin):
     
     def payment_status(self, obj):
         """Show payment status badge"""
-        if obj.fully_paid:
-            return format_html('<span style="color: green; font-weight: bold;">✓ Fully Paid</span>')
-        elif obj.remaining_balance > 0:
-            return format_html('<span style="color: orange;">⏳ Pending</span>')
+        try:
+            if obj.fully_paid:
+                return format_html('<span style="color: green; font-weight: bold;">✓ Fully Paid</span>')
+            elif obj.remaining_balance and obj.remaining_balance > 0:
+                return format_html('<span style="color: orange;">⏳ Pending</span>')
+        except (AttributeError, TypeError):
+            pass
         return '-'
     payment_status.short_description = 'Status'
     
     def payment_progress(self, obj):
         """Show payment progress bar"""
-        progress = obj.get_payment_progress()
-        color = 'green' if progress >= 100 else 'orange'
+        try:
+            # Safely get progress value
+            progress = obj.get_payment_progress() if hasattr(obj, 'get_payment_progress') else 0
+            
+            # Ensure we have a valid number
+            if progress is None:
+                progress_value = 0
+            else:
+                try:
+                    progress_value = int(float(progress))
+                except (TypeError, ValueError):
+                    progress_value = 0
+            
+            # Ensure progress_value is within bounds
+            progress_value = max(0, min(100, progress_value))
+            
+            color = 'green' if progress_value >= 100 else 'orange'
+            
+            # Ensure all values are strings and not empty
+            width_str = str(progress_value)
+            percent_str = str(progress_value)
+            color_str = str(color)
+            
+            # Only call format_html if we have all arguments
+            if width_str and color_str and percent_str:
+                return format_html(
+                    '<div style="width: 100px; background: #eee; border-radius: 3px;">'
+                    '<div style="width: {}%; background: {}; height: 10px; border-radius: 3px;"></div>'
+                    '</div> {}%',
+                    width_str, color_str, percent_str
+                )
+            
+        except Exception:
+            pass
+            
+        # Return a default if anything goes wrong
         return format_html(
             '<div style="width: 100px; background: #eee; border-radius: 3px;">'
-            '<div style="width: {}%; background: {}; height: 10px; border-radius: 3px;"></div>'
-            '</div> {}%',
-            progress, color, progress
+            '<div style="width: 0%; background: gray; height: 10px; border-radius: 3px;"></div>'
+            '</div> 0%'
         )
     payment_progress.short_description = 'Progress'
     
     def payment_progress_display(self, obj):
         """Display payment progress for readonly field"""
-        return f"{obj.get_payment_progress()}%"
+        try:
+            if hasattr(obj, 'get_payment_progress'):
+                progress = obj.get_payment_progress()
+                if progress is not None:
+                    return f"{int(float(progress))}%"
+        except (TypeError, ValueError, AttributeError):
+            pass
+        return "0%"
     payment_progress_display.short_description = 'Payment Progress'
     
     def total_paid_display(self, obj):
         """Display total paid amount"""
-        total_paid = obj.initial_amount - obj.remaining_balance
-        return format_html('UGX {:,.0f}', total_paid)
+        try:
+            if hasattr(obj, 'initial_amount') and hasattr(obj, 'remaining_balance'):
+                total_paid = float(obj.initial_amount) - float(obj.remaining_balance)
+                formatted_amount = "{:,.0f}".format(max(0, total_paid))
+                return format_html('UGX {}', formatted_amount)
+        except (TypeError, ValueError, AttributeError):
+            pass
+        return format_html('UGX 0')
     total_paid_display.short_description = 'Total Paid'
     
     def remaining_balance_display(self, obj):
         """Display remaining balance"""
-        return format_html('UGX {:,.0f}', obj.remaining_balance)
+        try:
+            if hasattr(obj, 'remaining_balance') and obj.remaining_balance is not None:
+                formatted_amount = "{:,.0f}".format(float(obj.remaining_balance))
+                return format_html('UGX {}', formatted_amount)
+        except (TypeError, ValueError, AttributeError):
+            pass
+        return format_html('UGX 0')
     remaining_balance_display.short_description = 'Remaining Balance'
     
     actions = ['mark_as_fully_paid', 'reset_payment_status']
     
     def mark_as_fully_paid(self, request, queryset):
         """Mark selected candidates as fully paid"""
-        updated = queryset.update(fully_paid=True, fully_paid_date=timezone.now().date())
-        self.message_user(request, f'{updated} candidates marked as fully paid.')
+        try:
+            updated = queryset.update(fully_paid=True, fully_paid_date=timezone.now().date())
+            self.message_user(request, f'{updated} candidates marked as fully paid.')
+        except Exception as e:
+            self.message_user(request, f'Error: {str(e)}', level='ERROR')
     mark_as_fully_paid.short_description = "Mark selected as fully paid"
     
     def reset_payment_status(self, request, queryset):
         """Reset payment status"""
-        updated = queryset.update(fully_paid=False, fully_paid_date=None)
-        self.message_user(request, f'{updated} candidates payment status reset.')
+        try:
+            updated = queryset.update(fully_paid=False, fully_paid_date=None)
+            self.message_user(request, f'{updated} candidates payment status reset.')
+        except Exception as e:
+            self.message_user(request, f'Error: {str(e)}', level='ERROR')
     reset_payment_status.short_description = "Reset payment status"
