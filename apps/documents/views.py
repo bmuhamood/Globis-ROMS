@@ -379,15 +379,14 @@ def delete_document(request, document_id):
     doc_status.save()
     
     messages.success(request, 'Document deleted successfully.')
-    return redirect('candidate_documents', candidate_id=candidate.id)
+    return redirect('candidate_documents', candidate_id=candidate.id) 
 
 @login_required
 @require_POST
 def merge_documents(request, candidate_id):
-    """Merge all uploaded documents into a single PDF - Updated for cloud storage"""
+    """Merge all uploaded documents into a single PDF - Fixed for cloud storage"""
     candidate = get_object_or_404(Candidate, pk=candidate_id)
     
-    # Get ALL documents
     documents = candidate.uploaded_documents.all().order_by(
         'document_type__order', 'uploaded_at'
     )
@@ -397,26 +396,21 @@ def merge_documents(request, candidate_id):
         return redirect('candidate_documents', candidate_id=candidate.id)
     
     try:
-        # Create a PDF merger
         merger = PyPDF2.PdfMerger()
         merged_count = 0
         failed_files = []
         
-        # Get the base URL for your site
-        base_url = f"{request.scheme}://{request.get_host()}"
+        bucket_name = "globis-hr_cloudbuild"  # Your bucket name
         
         for doc in documents:
             file_ext = doc.file_type.lower()
             
             try:
-                # Build full URL
-                if doc.file.url.startswith('/'):
-                    file_url = base_url + doc.file.url
-                else:
-                    file_url = doc.file.url
-                    
+                # Construct the full cloud storage URL for the source document
+                file_path = str(doc.file)  # This gives something like: candidate_documents/2026/03/04/filename.pdf
+                file_url = f"https://storage.googleapis.com/{bucket_name}/{file_path}"
+                
                 if file_ext == 'pdf':
-                    # For PDFs, download the file content first
                     response = requests.get(file_url, timeout=30)
                     if response.status_code == 200:
                         merger.append(BytesIO(response.content))
@@ -426,10 +420,8 @@ def merge_documents(request, candidate_id):
                         messages.warning(request, f'Skipped {doc.original_filename} - could not download.')
                         
                 elif file_ext in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
-                    # For images, download and convert
                     response = requests.get(file_url, timeout=30)
                     if response.status_code == 200:
-                        # Save image temporarily
                         img_bytes = BytesIO(response.content)
                         pdf_bytes = img2pdf.convert(img_bytes)
                         merger.append(BytesIO(pdf_bytes))
@@ -439,11 +431,8 @@ def merge_documents(request, candidate_id):
                         messages.warning(request, f'Skipped {doc.original_filename} - could not download.')
                 else:
                     failed_files.append(doc.original_filename)
-                    messages.warning(request, f'Skipped {doc.original_filename} - unsupported format for merging.')
+                    messages.warning(request, f'Skipped {doc.original_filename} - unsupported format.')
                     
-            except requests.exceptions.RequestException as e:
-                failed_files.append(doc.original_filename)
-                messages.warning(request, f'Error downloading {doc.original_filename}: {str(e)}')
             except Exception as e:
                 failed_files.append(doc.original_filename)
                 messages.warning(request, f'Error processing {doc.original_filename}: {str(e)}')
@@ -452,31 +441,38 @@ def merge_documents(request, candidate_id):
             messages.error(request, 'No valid documents to merge.')
             return redirect('candidate_documents', candidate_id=candidate.id)
         
-        # Save merged PDF to memory
+        # Save merged PDF
         merged_pdf = BytesIO()
         merger.write(merged_pdf)
         merged_pdf.seek(0)
         
-        # Save to Django storage (cloud)
         safe_name = slugify(candidate.full_name)
         merged_filename = f"{candidate.passport_no}_{safe_name}_documents.pdf"
         
-        # Create or update MergedDocument
+        # Save to cloud storage
+        from django.core.files.base import ContentFile
+        from google.cloud import storage
+        
+        # Alternative: Upload directly to bucket
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(f"merged_documents/{candidate.id}/{merged_filename}")
+        blob.upload_from_string(merged_pdf.getvalue(), content_type='application/pdf')
+        
+        # Update database
         merged_doc, created = MergedDocument.objects.update_or_create(
             candidate=candidate,
             defaults={
                 'created_by': request.user,
+                'file': f"merged_documents/{candidate.id}/{merged_filename}"
             }
         )
-        
-        # Save the file to the storage
-        merged_doc.file.save(merged_filename, ContentFile(merged_pdf.getvalue()))
         merged_doc.document_types.set(documents.values_list('document_type', flat=True).distinct())
         
         if failed_files:
             messages.warning(request, f'Merged {merged_count} documents. Skipped: {", ".join(failed_files[:3])}')
         else:
-            messages.success(request, f'Successfully merged {merged_count} documents into one PDF.')
+            messages.success(request, f'Successfully merged {merged_count} documents.')
         
     except Exception as e:
         messages.error(request, f'Error merging documents: {str(e)}')
