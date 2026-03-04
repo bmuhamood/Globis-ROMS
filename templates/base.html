@@ -265,6 +265,26 @@
                 </a>
                 {% endif %}
                 
+                <!-- JOBS SECTION - All logged in users can view, only admin can manage -->
+                <div class="sidebar-heading small text-uppercase text-white-50 px-3 mt-3 mb-2">
+                    <i class="fas fa-briefcase me-2"></i>CAREERS
+                </div>
+                
+                <!-- Public Jobs List - all users can view -->
+                <a href="{% url 'jobs:job_list' %}" class="list-group-item list-group-item-action ps-4">
+                    <i class="fas fa-briefcase me-2"></i>Available Jobs
+                    {% if user_role == 'admin' %}
+                    <span class="badge bg-success float-end">Manage</span>
+                    {% endif %}
+                </a>
+                
+                <!-- Job Management - only admin can see -->
+                {% if user_role == 'admin' %}
+                <a href="{% url 'jobs:admin_job_list' %}" class="list-group-item list-group-item-action ps-5">
+                    <i class="fas fa-cog me-2"></i>Manage Jobs
+                </a>
+                {% endif %}
+                
                 <!-- RECRUITMENT SECTION -->
                 <div class="sidebar-heading small text-uppercase text-white-50 px-3 mt-3 mb-2">
                     <i class="fas fa-users me-2"></i>RECRUITMENT

@@ -76,7 +76,7 @@
                     <div class="flex-grow-1">
                         <div class="small text-primary text-uppercase mb-0">Total Money In</div>
                         <div class="h4 fw-bold mb-0">UGX {{ chart_data.total_money_in|default:"0"|floatformat:0 }}</div>
-                        <small class="text-muted">Income + Capital</small>
+                        <small class="text-muted">All income + capital</small>
                     </div>
                     <div class="ms-2">
                         <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
@@ -139,19 +139,27 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-3 text-center mb-2">
+                    <div class="col-md-2 text-center mb-2">
                         <span class="small text-muted d-block">Candidate Payments</span>
                         <span class="h5 fw-bold text-info">UGX {{ chart_data.total_candidate_payments|floatformat:0 }}</span>
                     </div>
-                    <div class="col-md-3 text-center mb-2">
+                    <div class="col-md-2 text-center mb-2">
                         <span class="small text-muted d-block">Client Payments</span>
                         <span class="h5 fw-bold text-success">UGX {{ chart_data.total_client_income|floatformat:0 }}</span>
                     </div>
-                    <div class="col-md-3 text-center mb-2">
-                        <span class="small text-muted d-block">Capital Injections</span>
+                    <div class="col-md-2 text-center mb-2">
+                        <span class="small text-muted d-block">Other Income</span>
+                        <span class="h5 fw-bold text-warning">UGX {{ chart_data.total_other_income|floatformat:0 }}</span>
+                    </div>
+                    <div class="col-md-2 text-center mb-2">
+                        <span class="small text-muted d-block">Loans</span>
+                        <span class="h5 fw-bold text-secondary">UGX {{ chart_data.total_loans|floatformat:0 }}</span>
+                    </div>
+                    <div class="col-md-2 text-center mb-2">
+                        <span class="small text-muted d-block">Capital</span>
                         <span class="h5 fw-bold text-primary">UGX {{ chart_data.total_capital|floatformat:0 }}</span>
                     </div>
-                    <div class="col-md-3 text-center mb-2">
+                    <div class="col-md-2 text-center mb-2">
                         <span class="small text-muted d-block">Expenses</span>
                         <span class="h5 fw-bold text-danger">UGX {{ chart_data.total_expenses|floatformat:0 }}</span>
                     </div>
@@ -197,6 +205,8 @@
                                 <th class="px-2 py-2 text-end">Opening Balance</th>
                                 <th class="px-2 py-2 text-end">Candidate Payments</th>
                                 <th class="px-2 py-2 text-end">Client Income</th>
+                                <th class="px-2 py-2 text-end">Other Income</th>
+                                <th class="px-2 py-2 text-end">Loans</th>
                                 <th class="px-2 py-2 text-end">Capital</th>
                                 <th class="px-2 py-2 text-end">Total Money In</th>
                                 <th class="px-2 py-2 text-end">Expenses</th>
@@ -211,6 +221,8 @@
                                 <td class="px-2 text-end">UGX {{ day.opening_balance|floatformat:0 }}</td>
                                 <td class="px-2 text-end text-info">UGX {{ day.candidate_payments|floatformat:0 }}</td>
                                 <td class="px-2 text-end text-success">UGX {{ day.client_income|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-warning">UGX {{ day.other_income|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-secondary">UGX {{ day.loans|floatformat:0 }}</td>
                                 <td class="px-2 text-end text-primary">UGX {{ day.capital|floatformat:0 }}</td>
                                 <td class="px-2 text-end fw-bold">UGX {{ day.total_money_in|floatformat:0 }}</td>
                                 <td class="px-2 text-end text-danger">UGX {{ day.expenses|floatformat:0 }}</td>
@@ -223,7 +235,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="9" class="text-center py-4">
+                                <td colspan="11" class="text-center py-4">
                                     <i class="fas fa-chart-line fa-2x text-muted mb-2"></i>
                                     <p class="text-muted small mb-0">No data available for selected date range</p>
                                 </td>
@@ -238,6 +250,8 @@
                                 <td class="px-2 text-end">-</td>
                                 <td class="px-2 text-end text-info">UGX {{ chart_data.total_candidate_payments|floatformat:0 }}</td>
                                 <td class="px-2 text-end text-success">UGX {{ chart_data.total_client_income|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-warning">UGX {{ chart_data.total_other_income|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-secondary">UGX {{ chart_data.total_loans|floatformat:0 }}</td>
                                 <td class="px-2 text-end text-primary">UGX {{ chart_data.total_capital|floatformat:0 }}</td>
                                 <td class="px-2 text-end">UGX {{ chart_data.total_money_in|floatformat:0 }}</td>
                                 <td class="px-2 text-end text-danger">UGX {{ chart_data.total_expenses|floatformat:0 }}</td>
@@ -334,6 +348,8 @@ function exportToExcel() {
         { wch: 15 }, // Opening Balance
         { wch: 18 }, // Candidate Payments
         { wch: 15 }, // Client Income
+        { wch: 15 }, // Other Income
+        { wch: 12 }, // Loans
         { wch: 12 }, // Capital
         { wch: 15 }, // Total Money In
         { wch: 12 }, // Expenses
@@ -360,16 +376,18 @@ function exportToExcel() {
     XLSX.utils.sheet_add_aoa(ws, [['SUMMARY']], { origin: `A${lastRow + 1}` });
     XLSX.utils.sheet_add_aoa(ws, [[`Total Candidate Payments: UGX {{ chart_data.total_candidate_payments|floatformat:0 }}`]], { origin: `A${lastRow + 2}` });
     XLSX.utils.sheet_add_aoa(ws, [[`Total Client Income: UGX {{ chart_data.total_client_income|floatformat:0 }}`]], { origin: `A${lastRow + 3}` });
-    XLSX.utils.sheet_add_aoa(ws, [[`Total Capital: UGX {{ chart_data.total_capital|floatformat:0 }}`]], { origin: `A${lastRow + 4}` });
-    XLSX.utils.sheet_add_aoa(ws, [[`Total Expenses: UGX {{ chart_data.total_expenses|floatformat:0 }}`]], { origin: `A${lastRow + 5}` });
-    XLSX.utils.sheet_add_aoa(ws, [[`Opening Balance: UGX {{ chart_data.opening_balance|floatformat:0 }}`]], { origin: `A${lastRow + 6}` });
-    XLSX.utils.sheet_add_aoa(ws, [[`Closing Balance: UGX {{ chart_data.closing_balance|floatformat:0 }}`]], { origin: `A${lastRow + 7}` });
-    XLSX.utils.sheet_add_aoa(ws, [[`Net Change: UGX {{ chart_data.net_change|floatformat:0 }}`]], { origin: `A${lastRow + 8}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Total Other Income: UGX {{ chart_data.total_other_income|floatformat:0 }}`]], { origin: `A${lastRow + 4}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Total Loans: UGX {{ chart_data.total_loans|floatformat:0 }}`]], { origin: `A${lastRow + 5}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Total Capital: UGX {{ chart_data.total_capital|floatformat:0 }}`]], { origin: `A${lastRow + 6}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Total Expenses: UGX {{ chart_data.total_expenses|floatformat:0 }}`]], { origin: `A${lastRow + 7}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Opening Balance: UGX {{ chart_data.opening_balance|floatformat:0 }}`]], { origin: `A${lastRow + 8}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Closing Balance: UGX {{ chart_data.closing_balance|floatformat:0 }}`]], { origin: `A${lastRow + 9}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Net Change: UGX {{ chart_data.net_change|floatformat:0 }}`]], { origin: `A${lastRow + 10}` });
     
     // Add generated timestamp
     const now = new Date();
     const timestamp = now.toLocaleString();
-    XLSX.utils.sheet_add_aoa(ws, [[`Generated: ${timestamp}`]], { origin: `A${lastRow + 10}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Generated: ${timestamp}`]], { origin: `A${lastRow + 12}` });
     
     // Add the worksheet to the workbook
     XLSX.utils.book_append_sheet(wb, ws, 'Cash Flow');

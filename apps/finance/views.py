@@ -29,28 +29,40 @@ def finance_dashboard(request):
     today_client_income = Income.objects.filter(date=today, income_type='client_payment').aggregate(total=Sum('amount'))['total'] or 0
     monthly_client_income = Income.objects.filter(date__gte=first_day_of_month, income_type='client_payment').aggregate(total=Sum('amount'))['total'] or 0
     
-    # Capital injections
+    # Capital injections (separate model)
     total_capital = CapitalInjection.objects.aggregate(total=Sum('amount'))['total'] or 0
     today_capital = CapitalInjection.objects.filter(date=today).aggregate(total=Sum('amount'))['total'] or 0
     monthly_capital = CapitalInjection.objects.filter(date__gte=first_day_of_month).aggregate(total=Sum('amount'))['total'] or 0
     
-    # Total income (all money from operations - excludes capital)
-    total_income = total_candidate_payments + total_client_income
-    today_income = today_candidate_payments + today_client_income
-    monthly_income = monthly_candidate_payments + monthly_client_income
+    # OTHER INCOME TYPES - Add this!
+    total_other_income = Income.objects.exclude(income_type='client_payment').aggregate(total=Sum('amount'))['total'] or 0
+    today_other_income = Income.objects.filter(date=today).exclude(income_type='client_payment').aggregate(total=Sum('amount'))['total'] or 0
+    monthly_other_income = Income.objects.filter(date__gte=first_day_of_month).exclude(income_type='client_payment').aggregate(total=Sum('amount'))['total'] or 0
     
-    # Total money in (all sources including capital)
-    total_money_in = total_candidate_payments + total_client_income + total_capital
+    # Total income (ALL money from Income model + Capital)
+    total_income_from_income_model = Income.objects.aggregate(total=Sum('amount'))['total'] or 0
+    total_income = total_income_from_income_model + total_capital
+    
+    # Total money in (all sources)
+    total_money_in = total_income_from_income_model + total_capital + total_candidate_payments
+    
+    # Today's totals
+    today_income_from_income = Income.objects.filter(date=today).aggregate(total=Sum('amount'))['total'] or 0
+    today_income = today_income_from_income + today_capital
+    
+    # Monthly totals
+    monthly_income_from_income = Income.objects.filter(date__gte=first_day_of_month).aggregate(total=Sum('amount'))['total'] or 0
+    monthly_income = monthly_income_from_income + monthly_capital
     
     # Expenses
     total_expenses = Expense.objects.aggregate(total=Sum('amount'))['total'] or 0
     today_expenses = Expense.objects.filter(date=today).aggregate(total=Sum('amount'))['total'] or 0
     monthly_expenses = Expense.objects.filter(date__gte=first_day_of_month).aggregate(total=Sum('amount'))['total'] or 0
     
-    # Cash in hand = ALL money received minus expenses
+    # Cash in hand
     cash_in_hand = total_money_in - total_expenses
     
-    # Net profit/loss = Income (operations only) - Expenses
+    # Net profit/loss
     net_profit = total_income - total_expenses
     
     # Recent transactions
@@ -58,8 +70,40 @@ def finance_dashboard(request):
     recent_income = Income.objects.select_related('client', 'received_by').all().order_by('-date')[:5]
     recent_expenses = Expense.objects.select_related('paid_by').all().order_by('-date')[:5]
     
-    # Chart data preparation...
-    # [rest of your chart code]
+    # Chart data (update to include all income)
+    months = []
+    income_data = []
+    expense_data = []
+    capital_data = []
+    candidate_payment_data = []
+    client_income_data = []
+    
+    for i in range(5, -1, -1):
+        month_date = today - timedelta(days=30*i)
+        month_start = datetime(month_date.year, month_date.month, 1).date()
+        if month_date.month == 12:
+            month_end = datetime(month_date.year + 1, 1, 1).date() - timedelta(days=1)
+        else:
+            month_end = datetime(month_date.year, month_date.month + 1, 1).date() - timedelta(days=1)
+        
+        month_income = Income.objects.filter(date__range=[month_start, month_end]).aggregate(total=Sum('amount'))['total'] or 0
+        month_expense = Expense.objects.filter(date__range=[month_start, month_end]).aggregate(total=Sum('amount'))['total'] or 0
+        month_capital = CapitalInjection.objects.filter(date__range=[month_start, month_end]).aggregate(total=Sum('amount'))['total'] or 0
+        month_candidate = CandidatePayment.objects.filter(date__range=[month_start, month_end]).aggregate(total=Sum('amount'))['total'] or 0
+        month_client = Income.objects.filter(date__range=[month_start, month_end], income_type='client_payment').aggregate(total=Sum('amount'))['total'] or 0
+        
+        months.append(month_date.strftime('%b %Y'))
+        income_data.append(float(month_income))
+        expense_data.append(float(month_expense))
+        capital_data.append(float(month_capital))
+        candidate_payment_data.append(float(month_candidate))
+        client_income_data.append(float(month_client))
+    
+    # Expense breakdown
+    expense_by_category = Expense.objects.values('category').annotate(
+        total=Sum('amount'),
+        count=Count('id')
+    ).order_by('-total')
     
     context = {
         'cash_in_hand': cash_in_hand,
@@ -68,6 +112,7 @@ def finance_dashboard(request):
         'total_capital': total_capital,
         'total_client_income': total_client_income,
         'total_candidate_payments': total_candidate_payments,
+        'total_other_income': total_other_income,  # Add this
         'total_money_in': total_money_in,
         'net_profit': net_profit,
         'today_income': today_income,
@@ -75,15 +120,23 @@ def finance_dashboard(request):
         'today_capital': today_capital,
         'today_candidate_payments': today_candidate_payments,
         'today_client_income': today_client_income,
+        'today_other_income': today_other_income,  # Add this
         'monthly_income': monthly_income,
         'monthly_expenses': monthly_expenses,
         'monthly_capital': monthly_capital,
         'monthly_candidate_payments': monthly_candidate_payments,
         'monthly_client_income': monthly_client_income,
+        'monthly_other_income': monthly_other_income,  # Add this
         'recent_income': recent_income,
         'recent_expenses': recent_expenses,
         'recent_candidate_payments': recent_candidate_payments,
-        # ... your chart data
+        'months': months,
+        'income_data': income_data,
+        'expense_data': expense_data,
+        'capital_data': capital_data,
+        'candidate_payment_data': candidate_payment_data,
+        'client_income_data': client_income_data,
+        'expense_by_category': expense_by_category,
     }
     return render(request, 'finance/dashboard.html', context)
 
@@ -650,7 +703,7 @@ def cash_position(request):
     start_date = datetime.strptime(date_from, '%Y-%m-%d').date()
     end_date = datetime.strptime(date_to, '%Y-%m-%d').date()
     
-    # Initialize running balance (you might want to get this from previous period)
+    # Initialize running balance
     running_balance = 0
     
     dates = []
@@ -659,6 +712,8 @@ def cash_position(request):
     
     total_candidate_payments = 0
     total_client_income = 0
+    total_other_income = 0
+    total_loans = 0
     total_capital = 0
     total_expenses = 0
     
@@ -667,16 +722,34 @@ def cash_position(request):
     while current_date <= end_date:
         # Get all transactions for this date
         day_candidate_payments = CandidatePayment.objects.filter(date=current_date).aggregate(total=Sum('amount'))['total'] or 0
-        day_client_income = Income.objects.filter(date=current_date, income_type='client_payment').aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Split income by type
+        day_client_income = Income.objects.filter(
+            date=current_date, 
+            income_type='client_payment'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        day_other_income = Income.objects.filter(
+            date=current_date,
+            income_type='other'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        day_loans = Income.objects.filter(
+            date=current_date,
+            income_type='loan'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
         day_capital = CapitalInjection.objects.filter(date=current_date).aggregate(total=Sum('amount'))['total'] or 0
         day_expenses = Expense.objects.filter(date=current_date).aggregate(total=Sum('amount'))['total'] or 0
         
-        day_total_in = day_candidate_payments + day_client_income + day_capital
+        day_total_in = day_candidate_payments + day_client_income + day_other_income + day_loans + day_capital
         day_net_change = day_total_in - day_expenses
         
         # Update running totals
         total_candidate_payments += day_candidate_payments
         total_client_income += day_client_income
+        total_other_income += day_other_income
+        total_loans += day_loans
         total_capital += day_capital
         total_expenses += day_expenses
         
@@ -692,6 +765,8 @@ def cash_position(request):
             'opening_balance': opening_balance,
             'candidate_payments': day_candidate_payments,
             'client_income': day_client_income,
+            'other_income': day_other_income,
+            'loans': day_loans,
             'capital': day_capital,
             'total_money_in': day_total_in,
             'expenses': day_expenses,
@@ -707,9 +782,11 @@ def cash_position(request):
         'opening_balance': balances[0] if balances else 0,
         'closing_balance': balances[-1] if balances else 0,
         'net_change': (balances[-1] - balances[0]) if len(balances) > 1 else 0,
-        'total_money_in': total_candidate_payments + total_client_income + total_capital,
+        'total_money_in': total_candidate_payments + total_client_income + total_other_income + total_loans + total_capital,
         'total_candidate_payments': total_candidate_payments,
         'total_client_income': total_client_income,
+        'total_other_income': total_other_income,
+        'total_loans': total_loans,
         'total_capital': total_capital,
         'total_expenses': total_expenses,
         'daily_data': daily_data,

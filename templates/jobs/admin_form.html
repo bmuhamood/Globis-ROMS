@@ -1,0 +1,489 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1">
+                    <i class="fas fa-briefcase me-2"></i>
+                    {% if is_edit %}Edit Job: <span class="text-primary">{{ job.title }}</span>{% else %}Create New Job{% endif %}
+                </h4>
+                <p class="text-muted small mb-0">
+                    {% if is_edit %}Update the job posting details below{% else %}Fill in the details to post a new job opportunity{% endif %}
+                </p>
+            </div>
+            <div>
+                <a href="{% url 'jobs:admin_job_list' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Steps -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="progress flex-grow-1 me-3" style="height: 8px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <span class="badge bg-success px-3 py-2">Step 1 of 1: Job Details</span>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <!-- Main Form Card -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data" id="jobForm">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information Section -->
+                    <div class="mb-4">
+                        <h5 class="text-primary fw-bold mb-3 pb-2 border-bottom">
+                            <i class="fas fa-info-circle me-2"></i>Basic Information
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.title.id_for_label }}" class="form-label fw-semibold">
+                                    Job Title <span class="text-danger">*</span>
+                                </label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">e.g., "Senior Software Developer"</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.reference.id_for_label }}" class="form-label fw-semibold">
+                                    Reference Number
+                                </label>
+                                {{ form.reference }}
+                                <small class="text-muted">Leave blank for auto-generation (e.g., JOB-ABC-12345)</small>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="{{ form.category.id_for_label }}" class="form-label fw-semibold">Category</label>
+                                {{ form.category }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.job_type.id_for_label }}" class="form-label fw-semibold">
+                                    Job Type <span class="text-danger">*</span>
+                                </label>
+                                {{ form.job_type }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.experience_level.id_for_label }}" class="form-label fw-semibold">Experience Level</label>
+                                {{ form.experience_level }}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="{{ form.location.id_for_label }}" class="form-label fw-semibold">
+                                    Location <span class="text-danger">*</span>
+                                </label>
+                                {{ form.location }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.salary_range.id_for_label }}" class="form-label fw-semibold">Salary Range</label>
+                                {{ form.salary_range }}
+                                <small class="text-muted">e.g., "UGX 2,000,000 - 3,500,000"</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.closing_date.id_for_label }}" class="form-label fw-semibold">
+                                    Closing Date <span class="text-danger">*</span>
+                                </label>
+                                {{ form.closing_date }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information Section -->
+                    <div class="mb-4">
+                        <h5 class="text-primary fw-bold mb-3 pb-2 border-bottom">
+                            <i class="fas fa-address-card me-2"></i>Contact Information
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.contact_email.id_for_label }}" class="form-label fw-semibold">
+                                    Contact Email <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-envelope"></i></span>
+                                    {{ form.contact_email }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.contact_phone.id_for_label }}" class="form-label fw-semibold">Contact Phone</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-phone"></i></span>
+                                    {{ form.contact_phone }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Section -->
+                    <div class="mb-4">
+                        <h5 class="text-primary fw-bold mb-3 pb-2 border-bottom">
+                            <i class="fas fa-align-left me-2"></i>Job Summary
+                        </h5>
+                        <div class="row">
+                            <div class="col-12">
+                                <label for="{{ form.summary.id_for_label }}" class="form-label fw-semibold">
+                                    Brief Overview <span class="text-danger">*</span>
+                                </label>
+                                {{ form.summary }}
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">Write a compelling summary to attract candidates</small>
+                                    <small class="text-muted"><span id="summaryCount">0</span>/500</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Attachments Section -->
+                    <div class="mb-4">
+                        <h5 class="text-primary fw-bold mb-3 pb-2 border-bottom">
+                            <i class="fas fa-paperclip me-2"></i>Attachments
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="upload-area border rounded p-4 text-center bg-light mb-3" id="uploadArea">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                    <h6 class="fw-semibold">Drag & Drop Files Here</h6>
+                                    <p class="small text-muted mb-3">or</p>
+                                    <label class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-folder-open me-1"></i>Browse Files
+                                        <input type="file" class="d-none" name="attachments" multiple id="fileInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                    </label>
+                                    <p class="small text-muted mt-2 mb-0">Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB each)</p>
+                                </div>
+                                
+                                <!-- Selected Files Preview -->
+                                <div id="filePreview" class="row g-2 mt-2"></div>
+                            </div>
+                        </div>
+                        
+                        {% if is_edit and job.attachments.all %}
+                        <div class="mt-3">
+                            <label class="form-label fw-semibold">Current Attachments</label>
+                            <div class="row g-2">
+                                {% for attachment in job.attachments.all %}
+                                <div class="col-md-4 col-lg-3">
+                                    <div class="card border shadow-sm">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-file-pdf text-danger fa-2x me-2"></i>
+                                                <div class="flex-grow-1 text-truncate">
+                                                    <small class="d-block text-truncate fw-semibold">{{ attachment.filename }}</small>
+                                                    <small class="text-muted">{{ attachment.uploaded_at|date:"M d, Y" }}</small>
+                                                </div>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-link text-dark" data-bs-toggle="dropdown">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <a href="{% url 'jobs:download_attachment' attachment.id %}" class="dropdown-item" target="_blank">
+                                                                <i class="fas fa-download me-2 text-success"></i>Download
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a href="{% url 'jobs:admin_delete_attachment' attachment.id %}" class="dropdown-item text-danger" 
+                                                               onclick="return confirm('Delete this attachment?')">
+                                                                <i class="fas fa-trash me-2"></i>Delete
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Publishing Options -->
+                    <div class="mb-4">
+                        <h5 class="text-primary fw-bold mb-3 pb-2 border-bottom">
+                            <i class="fas fa-globe me-2"></i>Publishing Options
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">
+                                        Publish Job (Visible to public)
+                                    </label>
+                                    <small class="text-muted d-block">Uncheck to save as draft</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <hr class="my-4">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'jobs:admin_job_list' %}" class="btn btn-light px-4">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary px-5" id="submitBtn">
+                            <i class="fas fa-save me-2"></i>
+                            {% if is_edit %}Update Job{% else %}Create Job{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File Upload and Form Handling Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Character counter for summary
+    const summaryField = document.querySelector('#id_summary');
+    if (summaryField) {
+        const summaryCount = document.getElementById('summaryCount');
+        summaryCount.textContent = summaryField.value.length;
+        
+        summaryField.addEventListener('input', function() {
+            summaryCount.textContent = this.value.length;
+            if (this.value.length > 500) {
+                summaryCount.classList.add('text-danger');
+            } else {
+                summaryCount.classList.remove('text-danger');
+            }
+        });
+    }
+    
+    // File upload preview
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const uploadArea = document.getElementById('uploadArea');
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            filePreview.innerHTML = '';
+            Array.from(this.files).forEach((file, index) => {
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                
+                // Determine icon based on file type
+                let fileIcon = 'fa-file';
+                let iconColor = 'text-secondary';
+                
+                if (file.type.includes('pdf')) {
+                    fileIcon = 'fa-file-pdf';
+                    iconColor = 'text-danger';
+                } else if (file.type.includes('word') || file.name.match(/\.docx?$/i)) {
+                    fileIcon = 'fa-file-word';
+                    iconColor = 'text-primary';
+                } else if (file.type.includes('image')) {
+                    fileIcon = 'fa-file-image';
+                    iconColor = 'text-success';
+                } else {
+                    fileIcon = 'fa-file';
+                    iconColor = 'text-secondary';
+                }
+                
+                const col = document.createElement('div');
+                col.className = 'col-md-3 col-6 mb-2';
+                col.innerHTML = `
+                    <div class="card border shadow-sm">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center">
+                                <i class="fas ${fileIcon} ${iconColor} fa-2x me-2"></i>
+                                <div class="flex-grow-1 text-truncate">
+                                    <small class="d-block text-truncate fw-semibold">${file.name}</small>
+                                    <small class="text-muted">${fileSize} MB</small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-link text-danger" onclick="this.closest('.col-md-3').remove()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                filePreview.appendChild(col);
+            });
+        });
+        
+        // Drag & Drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            uploadArea.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+        }
+        
+        function unhighlight() {
+            uploadArea.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+        }
+        
+        uploadArea.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            
+            // Trigger change event
+            const event = new Event('change', { bubbles: true });
+            fileInput.dispatchEvent(event);
+        });
+    }
+    
+    // Form submission handling
+    const form = document.getElementById('jobForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (form) {
+        form.addEventListener('submit', function() {
+            // Disable submit button to prevent double submission
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+            }
+        });
+    }
+});
+</script>
+
+<style>
+    /* Form styling */
+    .form-label {
+        margin-bottom: 0.3rem;
+        color: #2c3e50;
+        font-size: 0.9rem;
+    }
+    
+    .form-control, .form-select {
+        border: 1px solid #e1e5eb;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #0184FC;
+        box-shadow: 0 0 0 3px rgba(1, 132, 252, 0.1);
+        outline: none;
+    }
+    
+    .input-group-text {
+        background: #f8fafc;
+        border: 1px solid #e1e5eb;
+        color: #6c757d;
+    }
+    
+    /* Upload area styling */
+    .upload-area {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px dashed #e1e5eb !important;
+    }
+    
+    .upload-area:hover {
+        background: #f1f5f9 !important;
+        border-color: #0184FC !important;
+    }
+    
+    .upload-area.border-primary {
+        border-color: #0184FC !important;
+    }
+    
+    /* Progress bar */
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 10px;
+        height: 8px;
+    }
+    
+    .progress-bar {
+        background: linear-gradient(90deg, #28a745, #20c997);
+        border-radius: 10px;
+    }
+    
+    /* Card styling */
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #eef2f6;
+    }
+    
+    .border-bottom {
+        border-bottom: 2px solid #eef2f6 !important;
+    }
+    
+    /* Badge styling */
+    .badge {
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        padding: 6px 12px;
+    }
+    
+    /* Form section spacing */
+    .mb-4 {
+        margin-bottom: 2rem !important;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 1rem !important;
+        }
+        
+        .btn {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+        
+        .d-flex.justify-content-end {
+            flex-direction: column;
+        }
+        
+        .gap-2 {
+            gap: 0.5rem !important;
+        }
+    }
+    
+    /* Loading spinner */
+    .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        border-width: 0.15em;
+    }
+</style>
+{% endblock %}

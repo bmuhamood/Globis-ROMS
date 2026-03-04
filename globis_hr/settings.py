@@ -91,7 +91,34 @@ INSTALLED_APPS = [
     'apps.finance',
     'apps.reports',
     'apps.imports',
+    'django_ckeditor_5',  # Only CKEditor 5
+    'apps.jobs.apps.JobsConfig',
 ]
+
+# Remove all CKEditor 4 configurations
+# Only keep CKEditor 5 configuration
+
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': ['heading', '|', 'bold', 'italic', 'link',
+                   'bulletedList', 'numberedList', 'blockQuote', '|',
+                   'undo', 'redo'],
+        'height': '300px',
+        'width': '100%',
+    },
+    'extends': {
+        'toolbar': ['heading', '|', 'bold', 'italic', 'link', 'underline',
+                   'strikethrough', 'subscript', 'superscript', '|',
+                   'bulletedList', 'numberedList', '|',
+                   'alignment', 'outdent', 'indent', '|',
+                   'blockQuote', 'insertTable', '|',
+                   'undo', 'redo'],
+        'height': '400px',
+        'width': '100%',
+    },
+}
+
+CKEDITOR_5_FILE_UPLOAD_PERMISSION = "staff"  # or "authenticated"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

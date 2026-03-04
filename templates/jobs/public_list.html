@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-briefcase me-2"></i>Available Jobs</h4>
+                <p class="text-muted small mb-0">Find your next career opportunity</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-search me-2"></i>Search Jobs</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control form-control-sm" name="search" 
+                               placeholder="Job title, reference, location..." value="{{ search_query }}">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" name="category">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category_id == category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" name="job_type">
+                            <option value="">All Types</option>
+                            {% for value, label in job_types %}
+                            <option value="{{ value }}" {% if job_type == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-search me-1"></i>Search
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Jobs List -->
+<div class="row mt-4">
+    <div class="col-12">
+        {% for job in page_obj %}
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h5 class="card-title fw-bold mb-1">
+                            <a href="{% url 'jobs:job_detail' job.id %}" class="text-decoration-none">
+                                {{ job.title }}
+                            </a>
+                        </h5>
+                        <p class="text-muted small mb-2">
+                            <span class="badge bg-info me-2">{{ job.get_job_type_display }}</span>
+                            <span class="me-3"><i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}</span>
+                            <span><i class="fas fa-calendar-alt me-1"></i>Closes: {{ job.closing_date|date:"M d, Y" }}</span>
+                            {% if job.is_closing_soon %}
+                            <span class="badge bg-warning ms-2">Closing Soon</span>
+                            {% endif %}
+                        </p>
+                        <p class="card-text small">{{ job.summary|truncatechars:200 }}</p>
+                        
+                        <!-- Action Buttons -->
+                        <div class="mt-2 d-flex gap-2">
+                            <a href="{% url 'jobs:job_detail' job.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </a>
+                            
+                            <!-- WhatsApp Share Buttons -->
+                            {% with job_title=job.title|urlencode job_location=job.location|urlencode job_url=request.build_absolute_uri|urlencode %}
+                            <a href="https://wa.me/?text=Check%20out%20this%20job%3A%20{{ job_title }}%20in%20{{ job_location }}%20-%20{{ job_url }}"
+                               class="btn btn-outline-success btn-sm" 
+                               target="_blank"
+                               title="Share on WhatsApp">
+                                <i class="fab fa-whatsapp me-1"></i>Share
+                            </a>
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+            <h5>No Jobs Available</h5>
+            <p class="text-muted">There are no job openings at the moment. Please check back later.</p>
+        </div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Font Awesome for WhatsApp icon (if not already in base.html) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
