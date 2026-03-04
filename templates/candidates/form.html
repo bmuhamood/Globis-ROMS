@@ -35,26 +35,26 @@
                             <input type="text" class="form-control" id="full_name" name="full_name" 
                                    value="{{ candidate.full_name|default:'' }}" required>
                         </div>
-                            <div class="col-md-6">
-                                <label for="passport_no" class="form-label">Passport Number *</label>
-                                <input type="text" class="form-control" id="passport_no" name="passport_no" 
-                                    value="{{ candidate.passport_no|default:'' }}" 
-                                    {% if not can_edit %}readonly{% endif %} 
-                                    required 
-                                    pattern="[A-Za-z0-9]+" 
-                                    title="Passport number must be unique and contain only letters and numbers">
-                                {% if can_edit %}
-                                <small class="text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Passport number must be unique in the system
-                                </small>
-                                {% else %}
-                                <small class="text-muted">
-                                    <i class="fas fa-lock me-1"></i>
-                                    Passport number cannot be changed - you don't have edit permission
-                                </small>
-                                {% endif %}
-                            </div>
+                        <div class="col-md-6">
+                            <label for="passport_no" class="form-label">Passport Number *</label>
+                            <input type="text" class="form-control" id="passport_no" name="passport_no" 
+                                value="{{ candidate.passport_no|default:'' }}" 
+                                {% if not can_edit %}readonly{% endif %} 
+                                required 
+                                pattern="[A-Za-z0-9]+" 
+                                title="Passport number must be unique and contain only letters and numbers">
+                            {% if can_edit %}
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Passport number must be unique in the system
+                            </small>
+                            {% else %}
+                            <small class="text-muted">
+                                <i class="fas fa-lock me-1"></i>
+                                Passport number cannot be changed - you don't have edit permission
+                            </small>
+                            {% endif %}
+                        </div>
                     </div>
                     
                     <div class="row mb-3">
@@ -64,22 +64,64 @@
                                    value="{{ candidate.passport_expiry|date:'Y-m-d'|default:'' }}" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="position" class="form-label">Position *</label>
-                            <input type="text" class="form-control" id="position" name="position" 
-                                   value="{{ candidate.position|default:'' }}" required>
+                            <label for="nationality" class="form-label">Nationality *</label>
+                            <select class="form-select" id="nationality" name="nationality" required>
+                                <option value="">Select Nationality</option>
+                                <option value="UG" {% if candidate.nationality == 'UG' %}selected{% endif %}>Ugandan</option>
+                                <option value="KE" {% if candidate.nationality == 'KE' %}selected{% endif %}>Kenyan</option>
+                                <option value="TZ" {% if candidate.nationality == 'TZ' %}selected{% endif %}>Tanzanian</option>
+                                <option value="RW" {% if candidate.nationality == 'RW' %}selected{% endif %}>Rwandan</option>
+                                <option value="BI" {% if candidate.nationality == 'BI' %}selected{% endif %}>Burundian</option>
+                                <option value="SS" {% if candidate.nationality == 'SS' %}selected{% endif %}>South Sudanese</option>
+                                <option value="NG" {% if candidate.nationality == 'NG' %}selected{% endif %}>Nigerian</option>
+                                <option value="GH" {% if candidate.nationality == 'GH' %}selected{% endif %}>Ghanaian</option>
+                                <option value="ZA" {% if candidate.nationality == 'ZA' %}selected{% endif %}>South African</option>
+                                <option value="CM" {% if candidate.nationality == 'CM' %}selected{% endif %}>Cameroonian</option>
+                                <option value="ET" {% if candidate.nationality == 'ET' %}selected{% endif %}>Ethiopian</option>
+                                <option value="ER" {% if candidate.nationality == 'ER' %}selected{% endif %}>Eritrean</option>
+                                <option value="SO" {% if candidate.nationality == 'SO' %}selected{% endif %}>Somali</option>
+                                <option value="CD" {% if candidate.nationality == 'CD' %}selected{% endif %}>Congolese (DRC)</option>
+                                <option value="EG" {% if candidate.nationality == 'EG' %}selected{% endif %}>Egyptian</option>
+                                <option value="MA" {% if candidate.nationality == 'MA' %}selected{% endif %}>Moroccan</option>
+                                <option value="TN" {% if candidate.nationality == 'TN' %}selected{% endif %}>Tunisian</option>
+                                <option value="Other" {% if candidate.nationality == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
                         </div>
                     </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
+                            <label for="position" class="form-label">Position *</label>
+                            <input type="text" class="form-control" id="position" name="position" 
+                                   value="{{ candidate.position|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
                             <label for="contact_number" class="form-label">Contact Number *</label>
                             <input type="text" class="form-control" id="contact_number" name="contact_number" 
                                    value="{{ candidate.contact_number|default:'' }}" required>
                         </div>
+                    </div>
+                    
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="salary" class="form-label">Salary (UGX) *</label>
                             <input type="number" step="1000" class="form-control" id="salary" name="salary" 
                                    value="{{ candidate.salary|default:'' }}" required>
+                            <small class="text-muted">Salary is editable for all users with edit permission</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="blood_group" class="form-label">Blood Group</label>
+                            <select class="form-select" id="blood_group" name="blood_group">
+                                <option value="">Select Blood Group</option>
+                                <option value="A+" {% if candidate.blood_group == 'A+' %}selected{% endif %}>A+</option>
+                                <option value="A-" {% if candidate.blood_group == 'A-' %}selected{% endif %}>A-</option>
+                                <option value="B+" {% if candidate.blood_group == 'B+' %}selected{% endif %}>B+</option>
+                                <option value="B-" {% if candidate.blood_group == 'B-' %}selected{% endif %}>B-</option>
+                                <option value="O+" {% if candidate.blood_group == 'O+' %}selected{% endif %}>O+</option>
+                                <option value="O-" {% if candidate.blood_group == 'O-' %}selected{% endif %}>O-</option>
+                                <option value="AB+" {% if candidate.blood_group == 'AB+' %}selected{% endif %}>AB+</option>
+                                <option value="AB-" {% if candidate.blood_group == 'AB-' %}selected{% endif %}>AB-</option>
+                            </select>
                         </div>
                     </div>
                     
@@ -98,20 +140,6 @@
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="blood_group" class="form-label">Blood Group</label>
-                            <select class="form-select" id="blood_group" name="blood_group">
-                                <option value="">Select Blood Group</option>
-                                <option value="A+" {% if candidate.blood_group == 'A+' %}selected{% endif %}>A+</option>
-                                <option value="A-" {% if candidate.blood_group == 'A-' %}selected{% endif %}>A-</option>
-                                <option value="B+" {% if candidate.blood_group == 'B+' %}selected{% endif %}>B+</option>
-                                <option value="B-" {% if candidate.blood_group == 'B-' %}selected{% endif %}>B-</option>
-                                <option value="O+" {% if candidate.blood_group == 'O+' %}selected{% endif %}>O+</option>
-                                <option value="O-" {% if candidate.blood_group == 'O-' %}selected{% endif %}>O-</option>
-                                <option value="AB+" {% if candidate.blood_group == 'AB+' %}selected{% endif %}>AB+</option>
-                                <option value="AB-" {% if candidate.blood_group == 'AB-' %}selected{% endif %}>AB-</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
                             <label for="agent" class="form-label">Agent</label>
                             <select class="form-select" id="agent" name="agent">
                                 <option value="">Select Agent</option>
@@ -122,9 +150,6 @@
                                 {% endfor %}
                             </select>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="client" class="form-label">Client</label>
                             <select class="form-select" id="client" name="client">
@@ -138,15 +163,20 @@
                         </div>
                     </div>
 
-                    <!-- PAYMENT INFORMATION SECTION -->
+                    <!-- PAYMENT INFORMATION SECTION - Only visible to Administrators -->
+                    {% if is_admin %}
                     <hr class="my-4">
-                    <h5 class="text-primary mb-3"><i class="fas fa-money-bill-wave me-2"></i>Payment Information</h5>
+                    <div class="alert alert-info">
+                        <i class="fas fa-lock me-2"></i>
+                        <strong>Payment Information</strong> - This section is only visible to Administrators
+                    </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="initial_amount" class="form-label">Total Amount to Pay (UGX) *</label>
+                            <label for="initial_amount" class="form-label">Total Amount to Pay (UGX)</label>
                             <input type="number" step="1000" class="form-control" id="initial_amount" name="initial_amount" 
-                                   value="{{ candidate.initial_amount|default:'' }}" required 
+                                   value="{{ candidate.initial_amount|default:'' }}" 
+                                   {% if candidate %}required{% endif %}
                                    onchange="calculatePaymentSummary()">
                             <small class="text-muted">Total amount the candidate is supposed to pay</small>
                         </div>
@@ -167,26 +197,18 @@
                             <div class="row">
                                 <div class="col-md-4 text-center">
                                     <label class="form-label text-muted">Total Amount</label>
-                                    <h4 class="text-primary" id="display_total">UGX 0</h4>
+                                    <h4 class="text-primary" id="display_total">UGX {{ candidate.initial_amount|default:0|floatformat:0 }}</h4>
                                 </div>
                                 <div class="col-md-4 text-center">
                                     <label class="form-label text-muted">Amount Paid</label>
                                     <h4 class="text-success" id="display_paid">
-                                        {% if candidate %}
-                                            UGX {{ candidate.initial_amount|add:candidate.remaining_balance|floatformat:0|default:"0" }}
-                                        {% else %}
-                                            UGX 0
-                                        {% endif %}
+                                        UGX {% if candidate %}{{ candidate.initial_amount|add:candidate.remaining_balance|floatformat:0 }}{% else %}0{% endif %}
                                     </h4>
                                 </div>
                                 <div class="col-md-4 text-center">
                                     <label class="form-label text-muted">Remaining Balance</label>
                                     <h4 class="{% if candidate.remaining_balance == 0 %}text-success{% else %}text-warning{% endif %}" id="display_balance">
-                                        {% if candidate %}
-                                            UGX {{ candidate.remaining_balance|floatformat:0|default:"0" }}
-                                        {% else %}
-                                            UGX 0
-                                        {% endif %}
+                                        UGX {% if candidate %}{{ candidate.remaining_balance|floatformat:0 }}{% else %}0{% endif %}
                                     </h4>
                                 </div>
                             </div>
@@ -220,12 +242,11 @@
                         </div>
                     </div>
                     
-                    <!-- Installment Info (shown only when installment is selected) - FIXED -->
+                    <!-- Installment Info (shown only when installment is selected) -->
                     <div id="installment_info" class="alert alert-info" style="display: {% if candidate.payment_plan == 'installment' %}block{% else %}none{% endif %};">
                         <i class="fas fa-info-circle me-2"></i>
-                        <strong>Installment Plan:</strong> After saving, you can create an installment schedule from the candidate detail page or using the "Create Schedule" menu.
+                        <strong>Installment Plan:</strong> After saving, you can create an installment schedule from the candidate detail page.
                         
-                        <!-- Only show button in edit mode, not in add mode -->
                         {% if candidate and candidate.id %}
                         <div class="mt-2">
                             <a href="{% url 'create_payment_schedule' candidate.id %}" class="btn btn-sm btn-primary">
@@ -258,7 +279,7 @@
                                         <div class="col-md-3">
                                             <div class="text-center p-2">
                                                 <span class="d-block text-muted">Total Paid</span>
-                                                <strong class="h5 text-success">UGX {% widthratio candidate.get_payment_progress 1 candidate.initial_amount %}</strong>
+                                                <strong class="h5 text-success">UGX {{ candidate.initial_amount|add:candidate.remaining_balance|floatformat:0 }}</strong>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
@@ -287,6 +308,16 @@
                     </div>
                     {% endif %}
                     
+                    {% else %}
+                    <!-- Hidden fields to preserve payment data for non-admins - DO NOT SHOW ANY PAYMENT INFO -->
+                    {% if candidate %}
+                    <input type="hidden" name="initial_amount" value="{{ candidate.initial_amount }}">
+                    <input type="hidden" name="payment_plan" value="{{ candidate.payment_plan }}">
+                    <input type="hidden" name="loan_provider" value="{{ candidate.loan_provider }}">
+                    <input type="hidden" name="loan_reference" value="{{ candidate.loan_reference }}">
+                    {% endif %}
+                    {% endif %}
+                    
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="remarks" class="form-label">Remarks</label>
@@ -308,14 +339,16 @@
 
 <script>
     function toggleLoanFields() {
-        var plan = document.getElementById('payment_plan').value;
+        var plan = document.getElementById('payment_plan');
+        if (!plan) return; // Exit if payment_plan doesn't exist (non-admin)
+        
         var loanFields = document.getElementById('loan_fields');
         var installmentInfo = document.getElementById('installment_info');
         
-        if (plan === 'loan') {
+        if (plan.value === 'loan') {
             loanFields.style.display = 'block';
             installmentInfo.style.display = 'none';
-        } else if (plan === 'installment') {
+        } else if (plan.value === 'installment') {
             loanFields.style.display = 'none';
             installmentInfo.style.display = 'block';
         } else {
@@ -326,14 +359,16 @@
     }
     
     function calculatePaymentSummary() {
-        var initial = document.getElementById('initial_amount').value;
-        if (initial) {
-            document.getElementById('display_total').innerText = 'UGX ' + parseInt(initial).toLocaleString();
+        var initial = document.getElementById('initial_amount');
+        if (!initial) return; // Exit if initial_amount doesn't exist (non-admin)
+        
+        if (initial.value) {
+            document.getElementById('display_total').innerText = 'UGX ' + parseInt(initial.value).toLocaleString();
             
             // For new candidates, paid amount is 0
             {% if not candidate %}
             document.getElementById('display_paid').innerText = 'UGX 0';
-            document.getElementById('display_balance').innerText = 'UGX ' + parseInt(initial).toLocaleString();
+            document.getElementById('display_balance').innerText = 'UGX ' + parseInt(initial.value).toLocaleString();
             document.getElementById('display_balance').className = 'text-warning';
             {% endif %}
         }

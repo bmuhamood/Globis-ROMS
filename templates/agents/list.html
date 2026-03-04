@@ -215,6 +215,10 @@
                                 <td class="px-2 text-center"><small>{{ agent.created_at|date:"M d, Y" }}</small></td>
                                 <td class="px-2 text-center">
                                     <div class="btn-group btn-group-sm" role="group">
+                                        <!-- View Details Button (NEW) -->
+                                        <a href="{% url 'agent_detail' agent.id %}" class="btn btn-outline-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
                                         <a href="{% url 'agent_edit' agent.id %}" class="btn btn-outline-warning" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>

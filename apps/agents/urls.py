@@ -6,4 +6,5 @@ urlpatterns = [
     path('add/', views.agent_add, name='agent_add'),
     path('<int:pk>/edit/', views.agent_edit, name='agent_edit'),
     path('<int:pk>/delete/', views.agent_delete, name='agent_delete'),
+    path('<int:pk>/', views.agent_detail, name='agent_detail'),
 ]

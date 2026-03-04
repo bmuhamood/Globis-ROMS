@@ -9,9 +9,11 @@
                 <p class="text-muted small mb-0">{{ client.contact_person }} | {{ client.email }} | {{ client.phone }}</p>
             </div>
             <div>
+                {% if perms.clients.change_client or is_admin %}
                 <a href="{% url 'client_edit' client.id %}" class="btn btn-warning btn-sm">
                     <i class="fas fa-edit me-1"></i>Edit
                 </a>
+                {% endif %}
                 <a href="{% url 'client_list' %}" class="btn btn-secondary btn-sm">
                     <i class="fas fa-arrow-left me-1"></i>Back
                 </a>
@@ -78,12 +80,14 @@
                             <h5 class="mb-0 fw-bold text-success">{{ placements|length }}</h5>
                         </div>
                     </div>
+                    {% if perms.clients.view_financial or is_admin %}
                     <div class="col-12 mt-2">
                         <div class="p-2 bg-light rounded">
                             <div class="small text-muted">Total Revenue</div>
                             <h5 class="mb-0 fw-bold text-success">UGX {{ total_revenue|floatformat:0 }}</h5>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -104,7 +108,9 @@
                                 <th class="px-2 py-1">Passport</th>
                                 <th class="px-2 py-1">Position</th>
                                 <th class="px-2 py-1">Status</th>
+                                {% if perms.clients.view_financial or is_admin %}
                                 <th class="px-2 py-1">Payment</th>
+                                {% endif %}
                                 <th class="px-2 py-1">Action</th>
                             </tr>
                         </thead>
@@ -121,6 +127,7 @@
                                         <span class="badge bg-warning" style="font-size: 0.6rem;">Processing</span>
                                     {% endif %}
                                 </td>
+                                {% if perms.clients.view_financial or is_admin %}
                                 <td class="px-2 py-1">
                                     {% if candidate.fully_paid %}
                                         <span class="badge bg-success" style="font-size: 0.6rem;">Paid</span>
@@ -128,6 +135,7 @@
                                         <span class="badge bg-warning" style="font-size: 0.6rem;">UGX {{ candidate.remaining_balance|floatformat:0 }}</span>
                                     {% endif %}
                                 </td>
+                                {% endif %}
                                 <td class="px-2 py-1">
                                     <a href="{% url 'candidate_detail' candidate.id %}" class="btn btn-outline-info py-0 px-1" style="font-size: 0.6rem;">
                                         <i class="fas fa-eye"></i>
@@ -136,7 +144,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center py-3">
+                                <td colspan="{% if perms.clients.view_financial or is_admin %}6{% else %}5{% endif %}" class="text-center py-3">
                                     <p class="text-muted small mb-0">No candidates found for this client</p>
                                 </td>
                             </tr>
@@ -165,7 +173,9 @@
                             <tr>
                                 <th class="px-2 py-1">Candidate</th>
                                 <th class="px-2 py-1">Date</th>
+                                {% if perms.clients.view_financial or is_admin %}
                                 <th class="px-2 py-1">Fee</th>
+                                {% endif %}
                                 <th class="px-2 py-1">Status</th>
                                 <th class="px-2 py-1">Action</th>
                             </tr>
@@ -175,7 +185,9 @@
                             <tr>
                                 <td class="px-2 py-1">{{ placement.candidate.full_name|truncatechars:20 }}</td>
                                 <td class="px-2 py-1">{{ placement.date_placed|date:"m/d/y" }}</td>
+                                {% if perms.clients.view_financial or is_admin %}
                                 <td class="px-2 py-1 text-success fw-semibold">UGX {{ placement.placement_fee|floatformat:0 }}</td>
+                                {% endif %}
                                 <td class="px-2 py-1">
                                     {% if placement.payment_status == 'paid' %}
                                         <span class="badge bg-success" style="font-size: 0.6rem;">Paid</span>
@@ -193,7 +205,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center py-3">
+                                <td colspan="{% if perms.clients.view_financial or is_admin %}5{% else %}4{% endif %}" class="text-center py-3">
                                     <p class="text-muted small mb-0">No placements found</p>
                                 </td>
                             </tr>

@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-hand-holding-usd me-2"></i>Capital Injections</h4>
+                <p class="text-muted small mb-0">Track money added to the company (investments, loans, owner contributions)</p>
+            </div>
+            <a href="{% url 'capital_add' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-2"></i>Add Capital
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mt-3">
+    <div class="col-md-4 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Total Capital</div>
+                        <div class="h4 fw-bold mb-0">UGX {{ total|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-hand-holding-usd text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Owner Investments</div>
+                        <div class="h4 fw-bold mb-0">
+                            UGX {{ owner_total|default:"0"|floatformat:0 }}
+                        </div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-user-tie text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">Loans</div>
+                        <div class="h4 fw-bold mb-0">
+                            UGX {{ loan_total|default:"0"|floatformat:0 }}
+                        </div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-hand-holding-usd text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-filter me-2"></i>Filter Capital</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">From Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_from" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">To Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_to" value="{{ date_to }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-0">Source Type</label>
+                        <select class="form-select form-select-sm" name="source_type">
+                            <option value="">All Types</option>
+                            {% for value, label in source_types %}
+                            <option value="{{ value }}" {% if source_type == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-search me-1"></i>Apply
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Tabs -->
+<div class="row mt-3">
+    <div class="col-12">
+        <ul class="nav nav-pills nav-fill bg-light rounded p-1 small">
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if not source_type %}active{% endif %}" href="{% url 'capital_list' %}">
+                    <i class="fas fa-list me-1"></i>All
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if source_type == 'owner' %}active{% endif %}" href="?source_type=owner">
+                    <i class="fas fa-user-tie me-1"></i>Owner
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if source_type == 'shareholder' %}active{% endif %}" href="?source_type=shareholder">
+                    <i class="fas fa-users me-1"></i>Shareholder
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if source_type == 'loan' %}active{% endif %}" href="?source_type=loan">
+                    <i class="fas fa-hand-holding-usd me-1"></i>Loan
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Capital Table -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small"><i class="fas fa-list me-2 text-primary"></i>Capital Injections</h6>
+                <span class="badge bg-primary">{{ capitals|length }} Records</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small" id="capitalTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2" onclick="sortTable(0)">Date <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2">Source Type</th>
+                                <th class="px-2 py-2">Source Name</th>
+                                <th class="px-2 py-2 text-end">Amount</th>
+                                <th class="px-2 py-2">Reference</th>
+                                <th class="px-2 py-2">Description</th>
+                                <th class="px-2 py-2">Received By</th>
+                                <th class="px-2 py-2 text-center">Receipt</th>
+                                <th class="px-2 py-2 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for capital in capitals %}
+                            <tr>
+                                <td class="px-2">{{ capital.date|date:"M d, Y" }}</td>
+                                <td class="px-2">
+                                    <span class="badge {% if capital.source_type == 'owner' %}bg-success{% elif capital.source_type == 'shareholder' %}bg-info{% elif capital.source_type == 'loan' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        {{ capital.get_source_type_display }}
+                                    </span>
+                                </td>
+                                <td class="px-2 fw-semibold">{{ capital.source_name }}</td>
+                                <td class="px-2 text-end fw-bold text-primary">UGX {{ capital.amount|floatformat:0 }}</td>
+                                <td class="px-2">
+                                    {% if capital.reference %}
+                                        <span class="badge bg-secondary">{{ capital.reference }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2">{{ capital.description|truncatechars:25|default:"-" }}</td>
+                                <td class="px-2">{{ capital.received_by.username }}</td>
+                                <td class="px-2 text-center">
+                                    {% if capital.receipt %}
+                                        <a href="{{ capital.receipt.url }}" target="_blank" class="text-success" title="View Receipt">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'capital_detail' capital.id %}" class="btn btn-outline-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'capital_edit' capital.id %}" class="btn btn-outline-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger" title="Delete" 
+                                                onclick="showDeleteModal({{ capital.id }}, '{{ capital.source_name|escapejs }}', {{ capital.amount }})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <i class="fas fa-hand-holding-usd fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No capital injections recorded</p>
+                                    <a href="{% url 'capital_add' %}" class="btn btn-primary btn-sm mt-2">
+                                        <i class="fas fa-plus me-1"></i>Add Capital
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white py-2">
+                <h6 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirm Delete
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-2">
+                <p class="small mb-1">Delete this capital injection?</p>
+                <p class="small text-muted mb-0" id="deleteDetails"></p>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="" id="deleteForm" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showDeleteModal(capitalId, sourceName, amount) {
+        document.getElementById('deleteDetails').innerHTML = 
+            `<strong>${sourceName}</strong><br>UGX ${amount.toLocaleString()}`;
+        document.getElementById('deleteForm').action = `/finance/capital/${capitalId}/delete/`;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+    
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById('capitalTable');
+        switching = true;
+        dir = 'asc';
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName('TD')[n];
+                y = rows[i + 1].getElementsByTagName('TD')[n];
+                
+                if (dir == 'asc') {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == 'desc') {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == 'asc') {
+                    dir = 'desc';
+                    switching = true;
+                }
+            }
+        }
+    }
+</script>
+
+<style>
+    .btn-group-sm .btn {
+        padding: 0.15rem 0.25rem;
+        font-size: 0.65rem;
+    }
+    .table > :not(caption) > * > * {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .nav-pills .nav-link {
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+    }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #0184FC, #00016E);
+    }
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h4 {
+        font-size: 1.2rem;
+    }
+    .small, .form-label {
+        font-size: 0.7rem;
+    }
+    .form-select-sm, .input-group-sm, .form-control-sm {
+        font-size: 0.75rem;
+    }
+    .badge {
+        font-weight: 500;
+    }
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+</style>
+{% endblock %}

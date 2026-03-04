@@ -1,79 +1,155 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row mt-4">
+<div class="row mt-3">
     <div class="col-12">
-        <h2 class="text-secondary"><i class="fas fa-chart-line me-2"></i>Finance Dashboard</h2>
-        <p class="text-muted">Track your income, expenses, and cash flow</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-chart-line me-2"></i>Finance Dashboard</h4>
+                <p class="text-muted small mb-0">Track all money flow: candidate payments, client payments, capital, and expenses</p>
+            </div>
+            <div>
+                <a href="{% url 'cash_position' %}" class="btn btn-info btn-sm me-1">
+                    <i class="fas fa-chart-line me-1"></i>Cash Flow
+                </a>
+                <a href="{% url 'capital_list' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-hand-holding-usd me-1"></i>Capital
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Summary Cards -->
-<div class="row mt-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Cash In Hand</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">UGX{{ cash_in_hand|floatformat:2 }}</div>
+<!-- Summary Cards - CASH IN HAND is total of all money in minus expenses -->
+<div class="row mt-3">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Cash in Hand</div>
+                        <div class="h4 fw-bold mb-0 text-success">UGX {{ cash_in_hand|floatformat:0 }}</div>
+                        <small class="text-muted">({{ total_candidate_payments|floatformat:0 }} + {{ total_client_income|floatformat:0 }} + {{ total_capital|floatformat:0 }}) - {{ total_expenses|floatformat:0 }}</small>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-success"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Total Income</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">UGX{{ total_income|floatformat:2 }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-arrow-down fa-2x text-primary"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-danger shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                            Total Expenses</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">UGX{{ total_expenses|floatformat:2 }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-arrow-up fa-2x text-danger"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            Net Profit/Loss</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">
-                            UGX{{ total_income|add:total_expenses|floatformat:2 }}
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-money-bill-wave text-success fa-2x"></i>
                         </div>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-chart-pie fa-2x text-info"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Total Income</div>
+                        <div class="h4 fw-bold mb-0">UGX {{ total_income|floatformat:0 }}</div>
+                        <small class="text-muted">Client Payments + Candidate Payments</small>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-arrow-down text-primary fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-danger border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-danger text-uppercase mb-0">Total Expenses</div>
+                        <div class="h4 fw-bold mb-0">UGX {{ total_expenses|floatformat:0 }}</div>
+                        <small class="text-muted">All business expenses</small>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-danger bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-arrow-up text-danger fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">Net Profit/Loss</div>
+                        <div class="h4 fw-bold mb-0 {% if net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            UGX {{ net_profit|floatformat:0 }}
+                        </div>
+                        <small class="text-muted">Income - Expenses</small>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-chart-pie text-warning fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Income Breakdown Cards - ALL MONEY COMING IN -->
+<div class="row mt-2">
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-info text-uppercase mb-0">👤 Candidate Payments</div>
+                        <div class="h5 fw-bold mb-0">UGX {{ total_candidate_payments|floatformat:0 }}</div>
+                        <small class="text-muted">Fees from candidates</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">💰 Client Payments</div>
+                        <div class="h5 fw-bold mb-0">UGX {{ total_client_income|floatformat:0 }}</div>
+                        <small class="text-muted">Income from clients</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">🏦 Capital Injections</div>
+                        <div class="h5 fw-bold mb-0">UGX {{ total_capital|floatformat:0 }}</div>
+                        <small class="text-muted">Owner/Investor funds</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-secondary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-secondary text-uppercase mb-0">📊 Total Money In</div>
+                        <div class="h5 fw-bold mb-0">UGX {{ total_money_in|floatformat:0 }}</div>
+                        <small class="text-muted">All sources combined</small>
                     </div>
                 </div>
             </div>
@@ -82,167 +158,264 @@
 </div>
 
 <!-- Today's Transactions -->
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header" style="background: #28a745; color: white;">
-                <h5 class="mb-0">Today's Income</h5>
+<div class="row mt-2">
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-info"><i class="fas fa-calendar-day me-2"></i>Today's Candidate Payments</h6>
             </div>
-            <div class="card-body">
-                <h3 class="text-success">UGX{{ today_income|floatformat:2 }}</h3>
-                <p class="text-muted mb-0">{% now "F j, Y" %}</p>
+            <div class="card-body py-2">
+                <h4 class="text-info fw-bold mb-0">UGX {{ today_candidate_payments|floatformat:0 }}</h4>
+                <small class="text-muted">{% now "F j, Y" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-success"><i class="fas fa-calendar-day me-2"></i>Today's Income</h6>
+            </div>
+            <div class="card-body py-2">
+                <h4 class="text-success fw-bold mb-0">UGX {{ today_income|floatformat:0 }}</h4>
+                <small class="text-muted">Client Payments + Capital</small>
+                <div class="mt-2 small">
+                    <div>Client: UGX {{ today_client_income|default:"0"|floatformat:0 }}</div>
+                    <div>Capital: UGX {{ today_capital|default:"0"|floatformat:0 }}</div>
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="col-md-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header" style="background: #dc3545; color: white;">
-                <h5 class="mb-0">Today's Expenses</h5>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-danger"><i class="fas fa-calendar-day me-2"></i>Today's Expenses</h6>
             </div>
-            <div class="card-body">
-                <h3 class="text-danger">UGX{{ today_expenses|floatformat:2 }}</h3>
-                <p class="text-muted mb-0">{% now "F j, Y" %}</p>
+            <div class="card-body py-2">
+                <h4 class="text-danger fw-bold mb-0">UGX {{ today_expenses|floatformat:0 }}</h4>
+                <small class="text-muted">{% now "F j, Y" %}</small>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Monthly Summary -->
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header" style="background: #0184FC; color: white;">
-                <h5 class="mb-0">Monthly Income (Last 30 Days)</h5>
+<div class="row mt-2">
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-info"><i class="fas fa-calendar-alt me-2"></i>Monthly Candidate Payments</h6>
+            </div>
+            <div class="card-body py-2">
+                <h4 class="text-info fw-bold">UGX {{ monthly_candidate_payments|floatformat:0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-success"><i class="fas fa-calendar-alt me-2"></i>Monthly Client Income</h6>
+            </div>
+            <div class="card-body py-2">
+                <h4 class="text-success fw-bold">UGX {{ monthly_client_income|floatformat:0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-calendar-alt me-2"></i>Monthly Capital</h6>
+            </div>
+            <div class="card-body py-2">
+                <h4 class="text-primary fw-bold">UGX {{ monthly_capital|floatformat:0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-danger"><i class="fas fa-calendar-alt me-2"></i>Monthly Expenses</h6>
+            </div>
+            <div class="card-body py-2">
+                <h4 class="text-danger fw-bold">UGX {{ monthly_expenses|floatformat:0 }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mt-2">
+    <div class="col-lg-8 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-chart-line me-2"></i>Last 6 Months Trend (All Money Sources)</h6>
             </div>
             <div class="card-body">
-                <h3 class="text-primary">UGX{{ monthly_income|floatformat:2 }}</h3>
-                <a href="{% url 'income_list' %}" class="btn btn-sm btn-outline-primary mt-2">
-                    <i class="fas fa-list me-2"></i>View All Income
-                </a>
+                <canvas id="financeChart" height="100"></canvas>
             </div>
         </div>
     </div>
     
-    <div class="col-md-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header" style="background: #5EAAE1; color: white;">
-                <h5 class="mb-0">Monthly Expenses (Last 30 Days)</h5>
+    <div class="col-lg-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-chart-pie me-2"></i>Income Sources</h6>
             </div>
             <div class="card-body">
-                <h3 class="text-info">UGX{{ monthly_expenses|floatformat:2 }}</h3>
-                <a href="{% url 'expense_list' %}" class="btn btn-sm btn-outline-info mt-2">
-                    <i class="fas fa-list me-2"></i>View All Expenses
-                </a>
+                <canvas id="incomePieChart" height="150"></canvas>
+                <div class="mt-3 small">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span><i class="fas fa-circle text-info me-1"></i> Candidate Payments</span>
+                        <span class="fw-bold">UGX {{ total_candidate_payments|floatformat:0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span><i class="fas fa-circle text-success me-1"></i> Client Payments</span>
+                        <span class="fw-bold">UGX {{ total_client_income|floatformat:0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span><i class="fas fa-circle text-primary me-1"></i> Capital</span>
+                        <span class="fw-bold">UGX {{ total_capital|floatformat:0 }}</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Recent Transactions -->
-<div class="row">
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header" style="background: #28a745; color: white;">
-                <h5 class="mb-0">Recent Income</h5>
+<div class="row mt-2">
+    <div class="col-lg-4 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-info"><i class="fas fa-user-graduate me-2"></i>Recent Candidate Payments</h6>
+                <a href="{% url 'payment_list' %}" class="btn btn-sm btn-outline-info py-0">View All</a>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-sm small mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Client</th>
-                                <th>Amount</th>
+                                <th class="px-2 py-1">Date</th>
+                                <th class="px-2 py-1">Candidate</th>
+                                <th class="px-2 py-1 text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in recent_candidate_payments %}
+                            <tr>
+                                <td class="px-2 py-1">{{ payment.date|date:"m/d" }}</td>
+                                <td class="px-2 py-1">{{ payment.candidate.full_name|truncatechars:15 }}</td>
+                                <td class="px-2 py-1 text-end text-info fw-bold">UGX {{ payment.amount|floatformat:0 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-2">No recent payments</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-success"><i class="fas fa-arrow-down me-2"></i>Recent Income</h6>
+                <a href="{% url 'income_list' %}" class="btn btn-sm btn-outline-success py-0">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm small mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-1">Date</th>
+                                <th class="px-2 py-1">Source</th>
+                                <th class="px-2 py-1 text-end">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for income in recent_income %}
                             <tr>
-                                <td>{{ income.date|date:"M d" }}</td>
-                                <td>{{ income.client.company_name|truncatechars:20 }}</td>
-                                <td class="text-success fw-bold">UGX{{ income.amount }}</td>
+                                <td class="px-2 py-1">{{ income.date|date:"m/d" }}</td>
+                                <td class="px-2 py-1">
+                                    {% if income.client %}
+                                        {{ income.client.company_name|truncatechars:12 }}
+                                    {% else %}
+                                        {{ income.source|truncatechars:12 }}
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 py-1 text-end text-success fw-bold">UGX {{ income.amount|floatformat:0 }}</td>
                             </tr>
                             {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center">No recent income</td>
-                            </tr>
+                            <tr><td colspan="3" class="text-center py-2">No recent income</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                <a href="{% url 'income_list' %}" class="btn btn-sm btn-success mt-2">
-                    <i class="fas fa-plus me-2"></i>Add Income
-                </a>
             </div>
         </div>
     </div>
     
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header" style="background: #dc3545; color: white;">
-                <h5 class="mb-0">Recent Expenses</h5>
+    <div class="col-lg-4 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-danger"><i class="fas fa-arrow-up me-2"></i>Recent Expenses</h6>
+                <a href="{% url 'expense_list' %}" class="btn btn-sm btn-outline-danger py-0">View All</a>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-sm small mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Category</th>
-                                <th>Amount</th>
+                                <th class="px-2 py-1">Date</th>
+                                <th class="px-2 py-1">Category</th>
+                                <th class="px-2 py-1 text-end">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for expense in recent_expenses %}
                             <tr>
-                                <td>{{ expense.date|date:"M d" }}</td>
-                                <td>{{ expense.category|title }}</td>
-                                <td class="text-danger fw-bold">UGX{{ expense.amount }}</td>
+                                <td class="px-2 py-1">{{ expense.date|date:"m/d" }}</td>
+                                <td class="px-2 py-1">{{ expense.get_category_display|truncatechars:12 }}</td>
+                                <td class="px-2 py-1 text-end text-danger fw-bold">UGX {{ expense.amount|floatformat:0 }}</td>
                             </tr>
                             {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center">No recent expenses</td>
-                            </tr>
+                            <tr><td colspan="3" class="text-center py-2">No recent expenses</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                <a href="{% url 'expense_add' %}" class="btn btn-sm btn-danger mt-2">
-                    <i class="fas fa-plus me-2"></i>Add Expense
-                </a>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Quick Actions -->
-<div class="row">
+<div class="row mt-2">
     <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header" style="background: #00016E; color: white;">
-                <h5 class="mb-0">Quick Actions</h5>
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <a href="{% url 'income_add' %}" class="btn btn-outline-success w-100 mb-2">
-                            <i class="fas fa-plus-circle me-2"></i>Add Income
+            <div class="card-body py-2">
+                <div class="row g-2">
+                    <div class="col-md-2 col-6">
+                        <a href="{% url 'payment_add' %}" class="btn btn-outline-info btn-sm w-100">
+                            <i class="fas fa-user-graduate me-1"></i>Candidate Payment
                         </a>
                     </div>
-                    <div class="col-md-3">
-                        <a href="{% url 'expense_add' %}" class="btn btn-outline-danger w-100 mb-2">
-                            <i class="fas fa-minus-circle me-2"></i>Add Expense
+                    <div class="col-md-2 col-6">
+                        <a href="{% url 'income_add' %}" class="btn btn-outline-success btn-sm w-100">
+                            <i class="fas fa-plus-circle me-1"></i>Client Income
                         </a>
                     </div>
-                    <div class="col-md-3">
-                        <a href="{% url 'income_list' %}" class="btn btn-outline-primary w-100 mb-2">
-                            <i class="fas fa-list me-2"></i>View All Income
+                    <div class="col-md-2 col-6">
+                        <a href="{% url 'capital_add' %}" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fas fa-hand-holding-usd me-1"></i>Add Capital
                         </a>
                     </div>
-                    <div class="col-md-3">
-                        <a href="{% url 'expense_list' %}" class="btn btn-outline-info w-100 mb-2">
-                            <i class="fas fa-list me-2"></i>View All Expenses
+                    <div class="col-md-2 col-6">
+                        <a href="{% url 'expense_add' %}" class="btn btn-outline-danger btn-sm w-100">
+                            <i class="fas fa-minus-circle me-1"></i>Add Expense
                         </a>
                     </div>
                 </div>
@@ -250,4 +423,116 @@
         </div>
     </div>
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Line Chart - Last 6 Months
+    const ctx = document.getElementById('financeChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ months|safe }},
+            datasets: [
+                {
+                    label: 'Candidate Payments',
+                    data: {{ candidate_payment_data|safe }},
+                    borderColor: '#17a2b8',
+                    backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Client Income',
+                    data: {{ client_income_data|safe }},
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Capital',
+                    data: {{ capital_data|safe }},
+                    borderColor: '#0184FC',
+                    backgroundColor: 'rgba(1, 132, 252, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Expenses',
+                    data: {{ expense_data|safe }},
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 12 }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // Income Sources Pie Chart
+    const pieCtx = document.getElementById('incomePieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Candidate Payments', 'Client Payments', 'Capital Injections'],
+            datasets: [{
+                data: [
+                    {{ total_candidate_payments|floatformat:0 }},
+                    {{ total_client_income|floatformat:0 }},
+                    {{ total_capital|floatformat:0 }}
+                ],
+                backgroundColor: ['#17a2b8', '#28a745', '#0184FC'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            cutout: '70%'
+        }
+    });
+});
+</script>
+
+<style>
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h4 {
+        font-size: 1.2rem;
+    }
+    .h5 {
+        font-size: 1rem;
+    }
+    .small {
+        font-size: 0.75rem;
+    }
+    .table-sm td, .table-sm th {
+        padding: 0.3rem 0.3rem;
+    }
+    .bg-opacity-10 {
+        opacity: 0.1;
+    }
+</style>
 {% endblock %}

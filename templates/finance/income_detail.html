@@ -1,0 +1,407 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1">
+                    <i class="fas fa-arrow-down me-2"></i>Income Details
+                </h4>
+                <p class="text-muted small mb-0">
+                    <span class="me-3"><i class="fas fa-calendar me-1"></i>{{ income.date|date:"F d, Y" }}</span>
+                    <span class="me-3"><i class="fas fa-tag me-1"></i>{{ income.get_income_type_display }}</span>
+                    {% if income.reference %}
+                    <span><i class="fas fa-hashtag me-1"></i>Ref: {{ income.reference }}</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <a href="{% url 'income_edit' income.id %}" class="btn btn-warning btn-sm me-1">
+                    <i class="fas fa-edit me-1"></i>Edit
+                </a>
+                <a href="{% url 'income_list' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Cards -->
+<div class="row mt-3">
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Amount</div>
+                        <div class="h3 fw-bold mb-0 text-success">UGX {{ income.amount|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-money-bill-wave text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Type</div>
+                        <div class="h5 fw-bold mb-0">
+                            {% if income.income_type == 'client_payment' %}
+                                <span class="badge bg-success fs-6">💰 Client Payment</span>
+                            {% elif income.income_type == 'capital_injection' %}
+                                <span class="badge bg-primary fs-6">🏦 Capital Injection</span>
+                            {% elif income.income_type == 'loan' %}
+                                <span class="badge bg-warning fs-6">💳 Loan</span>
+                            {% else %}
+                                <span class="badge bg-secondary fs-6">📦 Other</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-tag text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-info text-uppercase mb-0">Payment Method</div>
+                        <div class="h5 fw-bold mb-0">
+                            {% if income.payment_method %}
+                                {{ income.get_payment_method_display }}
+                            {% else %}
+                                <span class="text-muted">Not specified</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-info bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-credit-card text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">Received By</div>
+                        <div class="h5 fw-bold mb-0">{{ income.received_by.get_full_name|default:income.received_by.username }}</div>
+                        <small class="text-muted">{{ income.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-user text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <!-- Main Details Card -->
+    <div class="col-md-8 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-info-circle me-2"></i>Transaction Details</h6>
+                <span class="badge bg-info">ID: {{ income.id }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm small">
+                            <tr>
+                                <th class="ps-0 py-2" width="40%">Reference Number:</th>
+                                <td class="pe-0 py-2">
+                                    {% if income.reference %}
+                                        <span class="badge bg-secondary fs-6">{{ income.reference }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 py-2">Transaction Date:</th>
+                                <td class="pe-0 py-2">{{ income.date|date:"l, F d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 py-2">Payment Method:</th>
+                                <td class="pe-0 py-2">
+                                    {% if income.payment_method %}
+                                        <span class="badge bg-secondary">{{ income.get_payment_method_display }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% if income.income_type == 'capital_injection' or income.income_type == 'loan' %}
+                            <tr>
+                                <th class="ps-0 py-2">Source:</th>
+                                <td class="pe-0 py-2">
+                                    {% if income.source %}
+                                        <span class="fw-semibold">{{ income.source }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm small">
+                            <tr>
+                                <th class="ps-0 py-2" width="40%">Recorded By:</th>
+                                <td class="pe-0 py-2">{{ income.received_by.get_full_name|default:income.received_by.username }}</td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 py-2">Recorded On:</th>
+                                <td class="pe-0 py-2">{{ income.created_at|date:"M d, Y H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 py-2">Last Updated:</th>
+                                <td class="pe-0 py-2">
+                                    {% if income.updated_at %}
+                                        <small>{{ income.updated_at|date:"M d, Y H:i" }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if income.description %}
+                <div class="mt-3">
+                    <h6 class="fw-bold small text-primary">Description / Notes</h6>
+                    <div class="p-3 bg-light rounded">
+                        {{ income.description|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Client/Source Information Card -->
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-primary">
+                    {% if income.income_type == 'client_payment' %}
+                        <i class="fas fa-building me-2"></i>Client Information
+                    {% elif income.income_type == 'capital_injection' %}
+                        <i class="fas fa-hand-holding-usd me-2"></i>Source Information
+                    {% elif income.income_type == 'loan' %}
+                        <i class="fas fa-hand-holding-usd me-2"></i>Lender Information
+                    {% else %}
+                        <i class="fas fa-info-circle me-2"></i>Source Information
+                    {% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if income.income_type == 'client_payment' and income.client %}
+                    <div class="text-center mb-3">
+                        <div class="bg-light rounded-circle d-inline-flex p-3 mb-2">
+                            <i class="fas fa-building fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="fw-bold">{{ income.client.company_name }}</h5>
+                    </div>
+                    
+                    <table class="table table-sm small">
+                        <tr>
+                            <th class="ps-0 py-2">Contact Person:</th>
+                            <td class="pe-0 py-2">{{ income.client.contact_person|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="ps-0 py-2">Email:</th>
+                            <td class="pe-0 py-2">
+                                {% if income.client.email %}
+                                    <a href="mailto:{{ income.client.email }}">{{ income.client.email }}</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="ps-0 py-2">Phone:</th>
+                            <td class="pe-0 py-2">{{ income.client.phone|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="ps-0 py-2">Country:</th>
+                            <td class="pe-0 py-2">{{ income.client.country|default:"-" }}</td>
+                        </tr>
+                    </table>
+                    
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="{% url 'client_detail' income.client.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>View Client Details
+                        </a>
+                    </div>
+                {% elif income.income_type == 'capital_injection' or income.income_type == 'loan' %}
+                    <div class="text-center mb-3">
+                        <div class="bg-light rounded-circle d-inline-flex p-3 mb-2">
+                            {% if income.income_type == 'capital_injection' %}
+                                <i class="fas fa-hand-holding-usd fa-3x text-primary"></i>
+                            {% else %}
+                                <i class="fas fa-hand-holding-usd fa-3x text-warning"></i>
+                            {% endif %}
+                        </div>
+                        <h5 class="fw-bold">{{ income.source|default:"Not specified" }}</h5>
+                    </div>
+                    
+                    <table class="table table-sm small">
+                        <tr>
+                            <th class="ps-0 py-2">Type:</th>
+                            <td class="pe-0 py-2">
+                                {% if income.income_type == 'capital_injection' %}
+                                    <span class="badge bg-primary">Capital Injection</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Loan</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="ps-0 py-2">Source:</th>
+                            <td class="pe-0 py-2">{{ income.source|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="ps-0 py-2">Reference:</th>
+                            <td class="pe-0 py-2">{{ income.reference|default:"-" }}</td>
+                        </tr>
+                    </table>
+                    
+                    <div class="alert alert-info small mt-3 mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        This is a {{ income.get_income_type_display|lower }} to the company.
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No source information available</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Receipt Preview Section (if receipt exists) -->
+{% if income.receipt %}
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-receipt me-2"></i>Receipt / Document</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <i class="fas fa-file-pdf fa-2x text-danger me-2"></i>
+                        <span>{{ income.receipt.name|cut:"income_receipts/" }}</span>
+                    </div>
+                    <a href="{{ income.receipt.url }}" class="btn btn-sm btn-success" target="_blank">
+                        <i class="fas fa-download me-1"></i>Download Receipt
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Related Transactions (if any) -->
+{% if related_incomes %}
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-history me-2"></i>Recent Transactions from Same {% if income.client %}Client{% else %}Source{% endif %}</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm small mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-1">Date</th>
+                                <th class="px-2 py-1">Type</th>
+                                <th class="px-2 py-1">Amount</th>
+                                <th class="px-2 py-1">Reference</th>
+                                <th class="px-2 py-1">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for related in related_incomes %}
+                            <tr>
+                                <td class="px-2 py-1">{{ related.date|date:"M d, Y" }}</td>
+                                <td class="px-2 py-1">
+                                    <span class="badge {% if related.income_type == 'client_payment' %}bg-success{% elif related.income_type == 'capital_injection' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                        {{ related.get_income_type_display|truncatechars:15 }}
+                                    </span>
+                                </td>
+                                <td class="px-2 py-1 text-success fw-semibold">UGX {{ related.amount|floatformat:0 }}</td>
+                                <td class="px-2 py-1">{{ related.reference|default:"-" }}</td>
+                                <td class="px-2 py-1">
+                                    <a href="{% url 'income_detail' related.id %}" class="btn btn-outline-info btn-sm py-0 px-1">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+    .table-sm th, .table-sm td {
+        padding: 0.4rem 0.5rem;
+    }
+    .btn-sm {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    .h3 {
+        font-size: 1.5rem;
+    }
+    .bg-opacity-10 {
+        opacity: 0.1;
+    }
+    .fs-6 {
+        font-size: 0.9rem !important;
+    }
+</style>
+{% endblock %}

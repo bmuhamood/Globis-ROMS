@@ -5,6 +5,33 @@ from django.utils import timezone
 from decimal import Decimal
 
 class Candidate(models.Model):
+    NATIONALITIES = [
+        ('UG', 'Ugandan'),
+        ('KE', 'Kenyan'),
+        ('TZ', 'Tanzanian'),
+        ('RW', 'Rwandan'),
+        ('BI', 'Burundian'),
+        ('SS', 'South Sudanese'),
+        ('NG', 'Nigerian'),
+        ('GH', 'Ghanaian'),
+        ('ZA', 'South African'),
+        ('CM', 'Cameroonian'),
+        ('CI', 'Ivorian'),
+        ('SN', 'Senegalese'),
+        ('ET', 'Ethiopian'),
+        ('ER', 'Eritrean'),
+        ('SO', 'Somali'),
+        ('CD', 'Congolese (DRC)'),
+        ('CG', 'Congolese (Brazzaville)'),
+        ('EG', 'Egyptian'),
+        ('MA', 'Moroccan'),
+        ('TN', 'Tunisian'),
+        ('DZ', 'Algerian'),
+        ('LY', 'Libyan'),
+        ('SD', 'Sudanese'),
+        ('Other', 'Other'),
+    ]
+    
     BLOOD_GROUPS = [
         ('A+', 'A+'), ('A-', 'A-'),
         ('B+', 'B+'), ('B-', 'B-'),
@@ -21,6 +48,7 @@ class Candidate(models.Model):
     full_name = models.CharField(max_length=200)
     passport_no = models.CharField(max_length=50, unique=True)
     passport_expiry = models.DateField()
+    nationality = models.CharField(max_length=50, choices=NATIONALITIES, default='UG', help_text="Candidate's nationality")
     position = models.CharField(max_length=100)
     contact_number = models.CharField(max_length=20)
     mother_name = models.CharField(max_length=100, blank=True)
@@ -71,7 +99,7 @@ class Candidate(models.Model):
             return 0
         total_paid = self.initial_amount - self.remaining_balance
         progress = (total_paid / self.initial_amount) * 100
-        return int(progress)  # Convert to int at the end
+        return int(progress)
     
     class Meta:
         ordering = ['-created_at']

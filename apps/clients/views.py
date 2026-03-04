@@ -9,11 +9,14 @@ from apps.placements.models import Placement
 
 @login_required
 def client_list(request):
+    # Check if user is admin (for financial visibility)
+    is_admin = request.user.is_superuser or request.user.groups.filter(name='Administrator').exists()
+    
     clients = Client.objects.annotate(
         candidate_count=Count('candidates'),
         placement_count=Count('placements'),
         total_revenue=Sum('placements__placement_fee')
-    ).all()
+    ).all().order_by('-created_at')  # Added order_by to fix warning
     
     # Search filter
     search_query = request.GET.get('search', '')
@@ -68,12 +71,16 @@ def client_list(request):
         'total_placements': total_placements,
         'active_clients': active_clients,
         'filter_type': request.GET.get('filter_type', ''),
+        'is_admin': is_admin,
     }
     return render(request, 'clients/list.html', context)
 
 
 @login_required
 def client_add(request):
+    # Check if user is admin (for template context)
+    is_admin = request.user.is_superuser or request.user.groups.filter(name='Administrator').exists()
+    
     if request.method == 'POST':
         client = Client.objects.create(
             company_name=request.POST.get('company_name'),
@@ -86,12 +93,15 @@ def client_add(request):
         messages.success(request, 'Client added successfully.')
         return redirect('client_list')
     
-    return render(request, 'clients/form.html')
+    # Pass is_admin to template
+    return render(request, 'clients/form.html', {'is_admin': is_admin})
 
 
 @login_required
 def client_edit(request, pk):
     client = get_object_or_404(Client, pk=pk)
+    # Check if user is admin (for template context)
+    is_admin = request.user.is_superuser or request.user.groups.filter(name='Administrator').exists()
     
     if request.method == 'POST':
         client.company_name = request.POST.get('company_name')
@@ -105,11 +115,17 @@ def client_edit(request, pk):
         messages.success(request, 'Client updated successfully.')
         return redirect('client_list')
     
-    return render(request, 'clients/form.html', {'client': client})
+    # Pass is_admin to template
+    return render(request, 'clients/form.html', {'client': client, 'is_admin': is_admin})
 
 
 @login_required
 def client_delete(request, pk):
+    # Only superusers or admins can delete
+    if not (request.user.is_superuser or request.user.groups.filter(name='Administrator').exists()):
+        messages.error(request, 'Permission denied. Only administrators can delete clients.')
+        return redirect('client_list')
+    
     client = get_object_or_404(Client, pk=pk)
     client_name = client.company_name
     client.delete()
@@ -120,6 +136,8 @@ def client_delete(request, pk):
 @login_required
 def client_detail(request, pk):
     client = get_object_or_404(Client, pk=pk)
+    is_admin = request.user.is_superuser or request.user.groups.filter(name='Administrator').exists()
+    
     candidates = Candidate.objects.filter(client=client).select_related('visa_process')
     placements = Placement.objects.filter(client=client).select_related('candidate')
     
@@ -130,5 +148,6 @@ def client_detail(request, pk):
         'candidates': candidates,
         'placements': placements,
         'total_revenue': total_revenue,
+        'is_admin': is_admin,
     }
     return render(request, 'clients/detail.html', context)

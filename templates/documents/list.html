@@ -345,6 +345,10 @@
                                         <a href="{% url 'download_all_documents' doc.candidate.id %}" class="btn btn-outline-success" title="Download All Documents">
                                             <i class="fas fa-download"></i>
                                         </a>
+                                        <!-- Download All Documents as Merged PDF -->
+                                        <a href="{% url 'download_merged' doc.candidate.id %}" class="btn btn-outline-success" title="Download All Documents (Merged PDF)">
+                                            <i class="fas fa-file-pdf me-1"></i>Download PDF
+                                        </a>
                                         <!-- Upload Documents Button -->
                                         <a href="{% url 'candidate_documents' doc.candidate.id %}#upload" class="btn btn-outline-primary" title="Upload Documents">
                                             <i class="fas fa-upload"></i>

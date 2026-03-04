@@ -35,6 +35,8 @@
         </div>
     </div>
     
+    <!-- Payment summary cards - Only visible to admin -->
+    {% if is_admin %}
     <div class="col-xl-3 col-md-6 mb-3">
         <div class="card border-start border-success border-4 shadow-sm h-100">
             <div class="card-body py-2">
@@ -88,6 +90,62 @@
             </div>
         </div>
     </div>
+    {% else %}
+    <!-- For non-admin users, show placeholder cards to maintain layout -->
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-secondary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-secondary text-uppercase mb-0">Active</div>
+                        <div class="h5 fw-bold mb-0">{{ active_count|default:candidates|length }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-secondary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-user-check text-secondary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-secondary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-secondary text-uppercase mb-0">This Month</div>
+                        <div class="h5 fw-bold mb-0">{{ month_count|default:"0" }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-secondary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-calendar-alt text-secondary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-start border-secondary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-secondary text-uppercase mb-0">Total</div>
+                        <div class="h5 fw-bold mb-0">{{ total_count|default:candidates|length }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-secondary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-users text-secondary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Search and Filter Section - Compact -->
@@ -211,14 +269,17 @@
                             <tr>
                                 <th class="px-2 py-2">Name</th>
                                 <th class="px-2 py-2">Passport</th>
+                                <th class="px-2 py-2">Nationality</th>
                                 <th class="px-2 py-2">Position</th>
                                 <th class="px-2 py-2">Contact</th>
                                 <th class="px-2 py-2">Agent</th>
                                 <th class="px-2 py-2">Client</th>
+                                {% if is_admin %}
                                 <th class="px-2 py-2 text-end">Initial</th>
                                 <th class="px-2 py-2 text-end">Balance</th>
                                 <th class="px-2 py-2">Plan</th>
                                 <th class="px-2 py-2">Status</th>
+                                {% endif %}
                                 <th class="px-2 py-2 text-center" style="min-width: 120px;">Actions</th>
                             </tr>
                         </thead>
@@ -227,10 +288,13 @@
                             <tr>
                                 <td class="px-2 fw-semibold">{{ candidate.full_name|truncatechars:20 }}</td>
                                 <td class="px-2"><span class="font-monospace small">{{ candidate.passport_no|truncatechars:12 }}</span></td>
+                                <td class="px-2">{{ candidate.get_nationality_display|truncatechars:15 }}</td>
                                 <td class="px-2">{{ candidate.position|truncatechars:15 }}</td>
                                 <td class="px-2">{{ candidate.contact_number|truncatechars:12 }}</td>
                                 <td class="px-2">{{ candidate.agent.name|truncatechars:12|default:"-" }}</td>
                                 <td class="px-2">{{ candidate.client.company_name|truncatechars:12|default:"-" }}</td>
+                                
+                                {% if is_admin %}
                                 <td class="px-2 text-end fw-semibold">UGX {{ candidate.initial_amount|floatformat:0 }}</td>
                                 <td class="px-2 text-end fw-semibold {% if candidate.remaining_balance == 0 %}text-success{% else %}text-warning{% endif %}">
                                     UGX {{ candidate.remaining_balance|floatformat:0 }}
@@ -252,6 +316,8 @@
                                         <span class="badge bg-warning px-2 py-1" style="font-size: 0.7rem;"><i class="fas fa-hourglass-half me-1"></i>Pending</span>
                                     {% endif %}
                                 </td>
+                                {% endif %}
+                                
                                 <td class="px-2 text-center">
                                     <div class="btn-group btn-group-sm" role="group">
                                         <a href="{% url 'candidate_detail' candidate.id %}" class="btn btn-outline-info" title="View">
@@ -260,14 +326,16 @@
                                         <a href="{% url 'candidate_edit' candidate.id %}" class="btn btn-outline-warning" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        {% if candidate.payment_plan != 'cash' %}
+                                        {% if candidate.payment_plan != 'cash' and is_admin %}
                                         <a href="{% url 'loan_payment_history' candidate.id %}" class="btn btn-outline-primary" title="Payment History">
                                             <i class="fas fa-history"></i>
                                         </a>
                                         {% endif %}
+                                        {% if is_admin %}
                                         <a href="{% url 'payment_add' %}?candidate={{ candidate.id }}" class="btn btn-outline-success" title="Add Payment">
                                             <i class="fas fa-plus"></i>
                                         </a>
+                                        {% endif %}
                                         <!-- Delete Button - Only visible to superusers -->
                                         {% if request.user.is_superuser %}
                                         <button type="button" class="btn btn-outline-danger" title="Delete" 
@@ -280,7 +348,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="11" class="text-center py-4">
+                                <td colspan="{% if is_admin %}12{% else %}8{% endif %}" class="text-center py-4">
                                     <i class="fas fa-user-slash fa-2x text-muted mb-2"></i>
                                     <p class="text-muted small mb-2">No candidates found</p>
                                     <a href="{% url 'candidate_add' %}" class="btn btn-primary btn-sm">

@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1">
+                    <i class="fas fa-hand-holding-usd me-2"></i>Capital Injection Details
+                </h4>
+                <p class="text-muted small mb-0">
+                    <span class="me-3"><i class="fas fa-calendar me-1"></i>{{ capital.date|date:"F d, Y" }}</span>
+                    <span class="me-3"><i class="fas fa-tag me-1"></i>{{ capital.get_source_type_display }}</span>
+                    {% if capital.reference %}
+                    <span><i class="fas fa-hashtag me-1"></i>Ref: {{ capital.reference }}</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <a href="{% url 'capital_edit' capital.id %}" class="btn btn-warning btn-sm me-1">
+                    <i class="fas fa-edit me-1"></i>Edit
+                </a>
+                <a href="{% url 'capital_list' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Cards -->
+<div class="row mt-3">
+    <div class="col-md-4 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Amount</div>
+                        <div class="h3 fw-bold mb-0 text-primary">UGX {{ capital.amount|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-hand-holding-usd text-primary fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Source</div>
+                        <div class="h5 fw-bold mb-0">{{ capital.source_name }}</div>
+                        <small class="text-muted">{{ capital.get_source_type_display }}</small>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-user-tie text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-info text-uppercase mb-0">Received By</div>
+                        <div class="h5 fw-bold mb-0">{{ capital.received_by.get_full_name|default:capital.received_by.username }}</div>
+                        <small class="text-muted">{{ capital.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-info bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-user text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <!-- Main Details Card -->
+    <div class="col-md-8 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-info-circle me-2"></i>Transaction Details</h6>
+                <span class="badge bg-info">ID: {{ capital.id }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm small">
+                            <tr>
+                                <th class="ps-0 py-2" width="40%">Reference Number:</th>
+                                <td class="pe-0 py-2">
+                                    {% if capital.reference %}
+                                        <span class="badge bg-secondary fs-6">{{ capital.reference }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 py-2">Transaction Date:</th>
+                                <td class="pe-0 py-2">{{ capital.date|date:"l, F d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 py-2">Source Type:</th>
+                                <td class="pe-0 py-2">
+                                    <span class="badge {% if capital.source_type == 'owner' %}bg-success{% elif capital.source_type == 'shareholder' %}bg-info{% elif capital.source_type == 'loan' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        {{ capital.get_source_type_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 py-2">Source Name:</th>
+                                <td class="pe-0 py-2">{{ capital.source_name }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm small">
+                            <tr>
+                                <th class="ps-0 py-2" width="40%">Received By:</th>
+                                <td class="pe-0 py-2">{{ capital.received_by.get_full_name|default:capital.received_by.username }}</td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 py-2">Recorded On:</th>
+                                <td class="pe-0 py-2">{{ capital.created_at|date:"M d, Y H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if capital.description %}
+                <div class="mt-3">
+                    <h6 class="fw-bold small text-primary">Description / Notes</h6>
+                    <div class="p-3 bg-light rounded">
+                        {{ capital.description|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Document Card -->
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-file-pdf me-2"></i>Document</h6>
+            </div>
+            <div class="card-body">
+                {% if capital.receipt %}
+                    <div class="text-center mb-3">
+                        {% if capital.receipt.url|lower|slice:"-4:" == ".pdf" %}
+                            <i class="fas fa-file-pdf fa-4x text-danger mb-2"></i>
+                        {% else %}
+                            <i class="fas fa-file-image fa-4x text-info mb-2"></i>
+                        {% endif %}
+                        <p class="small text-muted mb-2">{{ capital.receipt.name|cut:"capital_receipts/" }}</p>
+                        <a href="{{ capital.receipt.url }}" class="btn btn-sm btn-success" target="_blank">
+                            <i class="fas fa-download me-1"></i>Download
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-pdf fa-4x text-muted mb-3"></i>
+                        <p class="text-muted small">No document uploaded</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+    .table-sm th, .table-sm td {
+        padding: 0.4rem 0.5rem;
+    }
+    .btn-sm {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    .h3 {
+        font-size: 1.5rem;
+    }
+    .bg-opacity-10 {
+        opacity: 0.1;
+    }
+    .fs-6 {
+        font-size: 0.9rem !important;
+    }
+</style>
+{% endblock %}

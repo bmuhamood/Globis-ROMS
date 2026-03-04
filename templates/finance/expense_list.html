@@ -1,22 +1,97 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row mt-4">
+<div class="row mt-3">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h2 class="text-secondary"><i class="fas fa-arrow-up me-2"></i>Expense Records</h2>
-                <p class="text-muted">Track all business expenses</p>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-arrow-up me-2"></i>Expense Records</h4>
+                <p class="text-muted small mb-0">Track all business expenses and company spending</p>
             </div>
-            <a href="{% url 'expense_add' %}" class="btn btn-danger">
+            <a href="{% url 'expense_add' %}" class="btn btn-danger btn-sm">
                 <i class="fas fa-plus me-2"></i>Add Expense
             </a>
         </div>
     </div>
 </div>
 
-<!-- Filter Section -->
+<!-- Summary Cards -->
 <div class="row mt-3">
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-danger border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-danger text-uppercase mb-0">Total Expenses</div>
+                        <div class="h4 fw-bold mb-0">UGX {{ total|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-danger bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-arrow-up text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">This Month</div>
+                        <div class="h4 fw-bold mb-0">UGX {{ month_total|default:"0"|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-calendar-alt text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-info text-uppercase mb-0">Transactions</div>
+                        <div class="h4 fw-bold mb-0">{{ expenses|length }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-info bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-exchange-alt text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-warning border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-warning text-uppercase mb-0">Avg per Transaction</div>
+                        <div class="h4 fw-bold mb-0">UGX {{ avg_per_transaction|default:"0"|floatformat:0 }}</div>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-chart-line text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="row mt-2">
     <div class="col-12">
         <div class="card shadow-sm">
             <div class="card-header bg-white py-2">
@@ -24,15 +99,15 @@
             </div>
             <div class="card-body bg-light py-2">
                 <form method="GET" class="row g-2">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small mb-0">From Date</label>
                         <input type="date" class="form-control form-control-sm" name="date_from" value="{{ date_from }}">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small mb-0">To Date</label>
                         <input type="date" class="form-control form-control-sm" name="date_to" value="{{ date_to }}">
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label small mb-0">Category</label>
                         <select class="form-select form-select-sm" name="category">
                             <option value="">All Categories</option>
@@ -43,9 +118,20 @@
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label small mb-0">Payment Method</label>
+                        <select class="form-select form-select-sm" name="payment_method">
+                            <option value="">All Methods</option>
+                            {% for value, label in payment_methods %}
+                            <option value="{{ value }}" {% if payment_method == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
                     <div class="col-md-2 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary btn-sm w-100">
-                            <i class="fas fa-search me-1"></i>Filter
+                            <i class="fas fa-search me-1"></i>Apply
                         </button>
                     </div>
                 </form>
@@ -54,47 +140,123 @@
     </div>
 </div>
 
-<div class="row mt-4">
+<!-- Quick Action Tabs -->
+<div class="row mt-3">
     <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header" style="background: #dc3545; color: white;">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Total Expenses: UGX{{ total|floatformat:2 }}</h5>
-                    <span class="badge bg-white text-danger">{{ expenses|length }} Records</span>
-                </div>
+        <ul class="nav nav-pills nav-fill bg-light rounded p-1 small">
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if not filter_type %}active{% endif %}" href="{% url 'expense_list' %}">
+                    <i class="fas fa-list me-1"></i>All
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'today' %}active{% endif %}" href="?date_from={% now 'Y-m-d' %}&date_to={% now 'Y-m-d' %}">
+                    <i class="fas fa-calendar-day me-1"></i>Today
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'week' %}active{% endif %}" href="?date_from={% now 'Y-m-d'|date:'Y-m-d' %}&date_to={% now 'Y-m-d'|date:'Y-m-d' %}">
+                    <i class="fas fa-calendar-week me-1"></i>This Week
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'month' %}active{% endif %}" href="?date_from={% now 'Y-m-01' %}&date_to={% now 'Y-m-d' %}">
+                    <i class="fas fa-calendar-alt me-1"></i>This Month
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link py-1 {% if filter_type == 'year' %}active{% endif %}" href="?date_from={% now 'Y-01-01' %}&date_to={% now 'Y-12-31' %}">
+                    <i class="fas fa-calendar me-1"></i>This Year
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Category Summary Cards -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="d-flex gap-2 flex-wrap justify-content-between">
+            {% for item in expense_by_category|slice:":6" %}
+            <div class="bg-light rounded p-2 small flex-fill text-center" style="min-width: 100px;">
+                <span class="text-secondary fw-bold">{{ item.category|title }}</span><br>
+                <span class="fw-semibold text-danger">UGX {{ item.total|floatformat:0 }}</span>
+                <small class="text-muted d-block">({{ item.count }})</small>
             </div>
-            <div class="card-body">
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Expenses Table -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold small"><i class="fas fa-list me-2 text-danger"></i>Expense Records</h6>
+                <span class="badge bg-danger">{{ expenses|length }} Records</span>
+            </div>
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0 small" id="expenseTable">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Category</th>
-                                <th>Description</th>
-                                <th>Amount</th>
-                                <th>Paid By</th>
-                                <th>Actions</th>
+                                <th class="px-2 py-2" onclick="sortTable(0)">Date <i class="fas fa-sort ms-1"></i></th>
+                                <th class="px-2 py-2">Category</th>
+                                <th class="px-2 py-2">Description</th>
+                                <th class="px-2 py-2 text-end">Amount</th>
+                                <th class="px-2 py-2">Payment Method</th>
+                                <th class="px-2 py-2">Reference</th>
+                                <th class="px-2 py-2">Paid By</th>
+                                <th class="px-2 py-2 text-center">Receipt</th>
+                                <th class="px-2 py-2 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for expense in expenses %}
                             <tr>
-                                <td>{{ expense.date|date:"M d, Y" }}</td>
-                                <td>
-                                    <span class="badge" style="background: #5EAAE1;">
-                                        {{ expense.category|title }}
+                                <td class="px-2">{{ expense.date|date:"M d, Y" }}</td>
+                                <td class="px-2">
+                                    <span class="badge" style="background: {% if expense.category == 'salary' %}#28a745{% elif expense.category == 'office_rent' %}#dc3545{% elif expense.category == 'utilities' %}#ffc107{% elif expense.category == 'travel' %}#17a2b8{% else %}#5EAAE1{% endif %};">
+                                        {{ expense.get_category_display }}
                                     </span>
                                 </td>
-                                <td>{{ expense.description|truncatechars:30 }}</td>
-                                <td class="fw-bold text-danger">UGX{{ expense.amount|floatformat:2 }}</td>
-                                <td>{{ expense.paid_by.username }}</td>
-                                <td>
+                                <td class="px-2">{{ expense.description|truncatechars:30 }}</td>
+                                <td class="px-2 text-end fw-bold text-danger">UGX {{ expense.amount|floatformat:0 }}</td>
+                                <td class="px-2">
+                                    {% if expense.payment_method %}
+                                        <span class="badge bg-secondary">{{ expense.get_payment_method_display|truncatechars:8 }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2">
+                                    {% if expense.reference %}
+                                        <span class="badge bg-info">{{ expense.reference|truncatechars:8 }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2">{{ expense.paid_by.username }}</td>
+                                <td class="px-2 text-center">
+                                    {% if expense.receipt %}
+                                        <a href="{{ expense.receipt.url }}" target="_blank" class="text-success" title="View Receipt">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-2 text-center">
                                     <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'expense_detail' expense.id %}" class="btn btn-outline-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
                                         <a href="{% url 'expense_edit' expense.id %}" class="btn btn-outline-warning" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <button type="button" class="btn btn-outline-danger" title="Delete" 
-                                                onclick="showDeleteModal({{ expense.id }}, '{{ expense.category|escapejs }}', {{ expense.amount }})">
+                                                onclick="showDeleteModal({{ expense.id }}, '{{ expense.get_category_display|escapejs }}', {{ expense.amount }})">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -102,9 +264,12 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center py-4">
-                                    <i class="fas fa-info-circle text-muted me-2"></i>
-                                    No expense records found
+                                <td colspan="9" class="text-center py-4">
+                                    <i class="fas fa-arrow-up fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No expense records found</p>
+                                    <a href="{% url 'expense_add' %}" class="btn btn-danger btn-sm mt-2">
+                                        <i class="fas fa-plus me-1"></i>Add Expense
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -112,38 +277,69 @@
                     </table>
                 </div>
             </div>
+            
+            <!-- Pagination -->
+            {% if expenses.has_other_pages %}
+            <div class="card-footer bg-white py-2">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if expenses.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ expenses.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ expenses.number }}/{{ expenses.paginator.num_pages }}</span>
+                        </li>
+                        
+                        {% if expenses.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ expenses.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ expenses.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-sm">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel">
+            <div class="modal-header bg-danger text-white py-2">
+                <h6 class="modal-title" id="deleteModalLabel">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     Confirm Delete
-                </h5>
+                </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p class="mb-0">Are you sure you want to delete this expense record?</p>
-                <p class="mt-2 mb-0 text-muted small" id="deleteDetails"></p>
-                <p class="text-danger small mt-2">
-                    <i class="fas fa-info-circle me-1"></i>
-                    This action cannot be undone.
-                </p>
+            <div class="modal-body py-2">
+                <p class="small mb-1">Delete this expense record?</p>
+                <p class="small text-muted mb-0" id="deleteDetails"></p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancel
-                </button>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form method="POST" action="" id="deleteForm" style="display: inline;">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-2"></i>Delete Permanently
-                    </button>
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                 </form>
             </div>
         </div>
@@ -153,23 +349,90 @@
 <script>
     function showDeleteModal(expenseId, category, amount) {
         document.getElementById('deleteDetails').innerHTML = 
-            `<strong>Category:</strong> ${category}<br>` +
-            `<strong>Amount:</strong> UGX ${amount.toFixed(2)}`;
+            `<strong>${category}</strong><br>UGX ${amount.toLocaleString()}`;
         document.getElementById('deleteForm').action = `/finance/expenses/${expenseId}/delete/`;
         new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+    
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById('expenseTable');
+        switching = true;
+        dir = 'asc';
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName('TD')[n];
+                y = rows[i + 1].getElementsByTagName('TD')[n];
+                
+                if (dir == 'asc') {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == 'desc') {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == 'asc') {
+                    dir = 'desc';
+                    switching = true;
+                }
+            }
+        }
     }
 </script>
 
 <style>
     .btn-group-sm .btn {
-        padding: 0.15rem 0.3rem;
-        font-size: 0.7rem;
+        padding: 0.15rem 0.25rem;
+        font-size: 0.65rem;
     }
     .table > :not(caption) > * > * {
-        vertical-align: middle;
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .nav-pills .nav-link {
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+    }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #dc3545, #bd2130);
+    }
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h4 {
+        font-size: 1.2rem;
+    }
+    .small, .form-label {
+        font-size: 0.7rem;
+    }
+    .form-select-sm, .input-group-sm, .form-control-sm {
+        font-size: 0.75rem;
     }
     .badge {
-        font-size: 0.7rem;
+        font-weight: 500;
+    }
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
     }
 </style>
 {% endblock %}

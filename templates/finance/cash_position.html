@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-secondary fw-bold mb-1"><i class="fas fa-chart-line me-2"></i>Cash Position</h4>
+                <p class="text-muted small mb-0">Track daily cash flow including all income sources and expenses</p>
+            </div>
+            <div>
+                <button onclick="exportToExcel()" class="btn btn-success btn-sm me-1">
+                    <i class="fas fa-file-excel me-1"></i>Export to Excel
+                </button>
+                <a href="{% url 'finance_dashboard' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Date Range Filter -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 text-primary fw-bold small"><i class="fas fa-calendar-alt me-2"></i>Select Date Range</h6>
+            </div>
+            <div class="card-body bg-light py-2">
+                <form method="GET" class="row g-2" id="filterForm">
+                    <div class="col-md-4">
+                        <label class="form-label small mb-0">From Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_from" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-0">To Date</label>
+                        <input type="date" class="form-control form-control-sm" name="date_to" value="{{ date_to }}">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-search me-1"></i>Update Chart
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards - Updated with proper calculations -->
+<div class="row mt-3">
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-success text-uppercase mb-0">Opening Balance</div>
+                        <div class="h4 fw-bold mb-0 text-success">UGX {{ chart_data.opening_balance|default:"0"|floatformat:0 }}</div>
+                        <small class="text-muted">{{ chart_data.dates.0|default:date_from }}</small>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-play text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-primary text-uppercase mb-0">Total Money In</div>
+                        <div class="h4 fw-bold mb-0">UGX {{ chart_data.total_money_in|default:"0"|floatformat:0 }}</div>
+                        <small class="text-muted">Income + Capital</small>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-arrow-down text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-danger border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-danger text-uppercase mb-0">Total Expenses</div>
+                        <div class="h4 fw-bold mb-0 text-danger">UGX {{ chart_data.total_expenses|default:"0"|floatformat:0 }}</div>
+                        <small class="text-muted">All outflows</small>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-danger bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-arrow-up text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small text-info text-uppercase mb-0">Closing Balance</div>
+                        <div class="h4 fw-bold mb-0 {% if chart_data.closing_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            UGX {{ chart_data.closing_balance|default:"0"|floatformat:0 }}
+                        </div>
+                        <small class="text-muted">{{ chart_data.dates.last|default:date_to }}</small>
+                    </div>
+                    <div class="ms-2">
+                        <div class="bg-info bg-opacity-10 p-2 rounded-circle">
+                            <i class="fas fa-flag-checkered text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Money Flow Summary -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-chart-pie me-2"></i>Money Flow Summary</h6>
+                <span class="badge bg-primary">Period: {{ date_from }} to {{ date_to }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-2">
+                        <span class="small text-muted d-block">Candidate Payments</span>
+                        <span class="h5 fw-bold text-info">UGX {{ chart_data.total_candidate_payments|floatformat:0 }}</span>
+                    </div>
+                    <div class="col-md-3 text-center mb-2">
+                        <span class="small text-muted d-block">Client Payments</span>
+                        <span class="h5 fw-bold text-success">UGX {{ chart_data.total_client_income|floatformat:0 }}</span>
+                    </div>
+                    <div class="col-md-3 text-center mb-2">
+                        <span class="small text-muted d-block">Capital Injections</span>
+                        <span class="h5 fw-bold text-primary">UGX {{ chart_data.total_capital|floatformat:0 }}</span>
+                    </div>
+                    <div class="col-md-3 text-center mb-2">
+                        <span class="small text-muted d-block">Expenses</span>
+                        <span class="h5 fw-bold text-danger">UGX {{ chart_data.total_expenses|floatformat:0 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cash Flow Chart -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-chart-area me-2"></i>Daily Cash Balance</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="cashFlowChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Daily Breakdown Table -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-table me-2"></i>Daily Transaction Breakdown</h6>
+                <div>
+                    <button onclick="exportToExcel()" class="btn btn-success btn-sm me-2">
+                        <i class="fas fa-file-excel me-1"></i>Export
+                    </button>
+                    <span class="badge bg-primary">{{ chart_data.dates|length }} Days</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small" id="cashFlowTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-2 py-2">Date</th>
+                                <th class="px-2 py-2 text-end">Opening Balance</th>
+                                <th class="px-2 py-2 text-end">Candidate Payments</th>
+                                <th class="px-2 py-2 text-end">Client Income</th>
+                                <th class="px-2 py-2 text-end">Capital</th>
+                                <th class="px-2 py-2 text-end">Total Money In</th>
+                                <th class="px-2 py-2 text-end">Expenses</th>
+                                <th class="px-2 py-2 text-end">Net Change</th>
+                                <th class="px-2 py-2 text-end">Closing Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in chart_data.daily_data %}
+                            <tr>
+                                <td class="px-2">{{ day.date }}</td>
+                                <td class="px-2 text-end">UGX {{ day.opening_balance|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-info">UGX {{ day.candidate_payments|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-success">UGX {{ day.client_income|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-primary">UGX {{ day.capital|floatformat:0 }}</td>
+                                <td class="px-2 text-end fw-bold">UGX {{ day.total_money_in|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-danger">UGX {{ day.expenses|floatformat:0 }}</td>
+                                <td class="px-2 text-end {% if day.net_change >= 0 %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                    UGX {{ day.net_change|floatformat:0 }}
+                                </td>
+                                <td class="px-2 text-end fw-bold {% if day.closing_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    UGX {{ day.closing_balance|floatformat:0 }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <i class="fas fa-chart-line fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small mb-0">No data available for selected date range</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <!-- Table Footer with Totals -->
+                        {% if chart_data.daily_data %}
+                        <tfoot class="bg-light fw-bold">
+                            <tr>
+                                <td class="px-2 py-2">TOTAL</td>
+                                <td class="px-2 text-end">-</td>
+                                <td class="px-2 text-end text-info">UGX {{ chart_data.total_candidate_payments|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-success">UGX {{ chart_data.total_client_income|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-primary">UGX {{ chart_data.total_capital|floatformat:0 }}</td>
+                                <td class="px-2 text-end">UGX {{ chart_data.total_money_in|floatformat:0 }}</td>
+                                <td class="px-2 text-end text-danger">UGX {{ chart_data.total_expenses|floatformat:0 }}</td>
+                                <td class="px-2 text-end {% if chart_data.net_change >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    UGX {{ chart_data.net_change|floatformat:0 }}
+                                </td>
+                                <td class="px-2 text-end {% if chart_data.closing_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    UGX {{ chart_data.closing_balance|floatformat:0 }}
+                                </td>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('cashFlowChart').getContext('2d');
+    
+    // Prepare data
+    const dates = {{ chart_data.dates|safe }};
+    const balances = {{ chart_data.balances|safe }};
+    
+    // Determine if trend is positive or negative
+    const isPositive = balances.length > 1 ? balances[balances.length - 1] >= balances[0] : true;
+    const lineColor = isPositive ? '#28a745' : '#dc3545';
+    const fillColor = isPositive ? 'rgba(40, 167, 69, 0.1)' : 'rgba(220, 53, 69, 0.1)';
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Daily Closing Balance',
+                data: balances,
+                borderColor: lineColor,
+                backgroundColor: fillColor,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: function(context) {
+                    const value = context.dataset.data[context.dataIndex];
+                    return value >= 0 ? '#28a745' : '#dc3545';
+                },
+                pointRadius: 3,
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Balance: UGX ' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return 'UGX ' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+
+function exportToExcel() {
+    // Get the table element
+    const table = document.getElementById('cashFlowTable');
+    
+    // Create a workbook
+    const wb = XLSX.utils.book_new();
+    
+    // Convert table to worksheet
+    const ws = XLSX.utils.table_to_sheet(table);
+    
+    // Add column widths
+    const colWidths = [
+        { wch: 12 }, // Date
+        { wch: 15 }, // Opening Balance
+        { wch: 18 }, // Candidate Payments
+        { wch: 15 }, // Client Income
+        { wch: 12 }, // Capital
+        { wch: 15 }, // Total Money In
+        { wch: 12 }, // Expenses
+        { wch: 12 }, // Net Change
+        { wch: 15 }  // Closing Balance
+    ];
+    ws['!cols'] = colWidths;
+    
+    // Add title and period information
+    XLSX.utils.sheet_add_aoa(ws, [['Cash Flow Report']], { origin: 'A1' });
+    XLSX.utils.sheet_add_aoa(ws, [[`Period: {{ date_from }} to {{ date_to }}`]], { origin: 'A2' });
+    XLSX.utils.sheet_add_aoa(ws, [['']], { origin: 'A3' }); // Empty row
+    
+    // Append the table data starting from row 4
+    const tableData = XLSX.utils.table_to_sheet(table, { raw: true });
+    XLSX.utils.sheet_add_json(ws, XLSX.utils.sheet_to_json(tableData, { header: 1 }), { 
+        origin: 'A4', 
+        skipHeader: false 
+    });
+    
+    // Add summary at the bottom
+    const lastRow = ws['!ref'] ? XLSX.utils.decode_range(ws['!ref']).e.r + 2 : 0;
+    XLSX.utils.sheet_add_aoa(ws, [['']], { origin: `A${lastRow}` });
+    XLSX.utils.sheet_add_aoa(ws, [['SUMMARY']], { origin: `A${lastRow + 1}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Total Candidate Payments: UGX {{ chart_data.total_candidate_payments|floatformat:0 }}`]], { origin: `A${lastRow + 2}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Total Client Income: UGX {{ chart_data.total_client_income|floatformat:0 }}`]], { origin: `A${lastRow + 3}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Total Capital: UGX {{ chart_data.total_capital|floatformat:0 }}`]], { origin: `A${lastRow + 4}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Total Expenses: UGX {{ chart_data.total_expenses|floatformat:0 }}`]], { origin: `A${lastRow + 5}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Opening Balance: UGX {{ chart_data.opening_balance|floatformat:0 }}`]], { origin: `A${lastRow + 6}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Closing Balance: UGX {{ chart_data.closing_balance|floatformat:0 }}`]], { origin: `A${lastRow + 7}` });
+    XLSX.utils.sheet_add_aoa(ws, [[`Net Change: UGX {{ chart_data.net_change|floatformat:0 }}`]], { origin: `A${lastRow + 8}` });
+    
+    // Add generated timestamp
+    const now = new Date();
+    const timestamp = now.toLocaleString();
+    XLSX.utils.sheet_add_aoa(ws, [[`Generated: ${timestamp}`]], { origin: `A${lastRow + 10}` });
+    
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Cash Flow');
+    
+    // Generate filename with date range
+    const filename = `cash_flow_{{ date_from }}_to_{{ date_to }}.xlsx`;
+    
+    // Export the file
+    XLSX.writeFile(wb, filename);
+}
+</script>
+
+<style>
+    .border-start {
+        border-left-width: 3px !important;
+    }
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+    .card-body.py-2 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    .h4 {
+        font-size: 1.2rem;
+    }
+    .h5 {
+        font-size: 1rem;
+    }
+    .table > :not(caption) > * > * {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    .bg-opacity-10 {
+        opacity: 0.1;
+    }
+    tfoot {
+        border-top: 2px solid #dee2e6;
+    }
+</style>
+{% endblock %}
