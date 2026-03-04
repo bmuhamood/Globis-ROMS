@@ -381,7 +381,6 @@ def delete_document(request, document_id):
     messages.success(request, 'Document deleted successfully.')
     return redirect('candidate_documents', candidate_id=candidate.id)
 
-
 @login_required
 @require_POST
 def merge_documents(request, candidate_id):
@@ -403,13 +402,22 @@ def merge_documents(request, candidate_id):
         merged_count = 0
         failed_files = []
         
+        # Get the base URL for your site
+        base_url = f"{request.scheme}://{request.get_host()}"
+        
         for doc in documents:
             file_ext = doc.file_type.lower()
             
             try:
+                # Build full URL
+                if doc.file.url.startswith('/'):
+                    file_url = base_url + doc.file.url
+                else:
+                    file_url = doc.file.url
+                    
                 if file_ext == 'pdf':
                     # For PDFs, download the file content first
-                    response = requests.get(doc.file.url, timeout=30)
+                    response = requests.get(file_url, timeout=30)
                     if response.status_code == 200:
                         merger.append(BytesIO(response.content))
                         merged_count += 1
@@ -419,7 +427,7 @@ def merge_documents(request, candidate_id):
                         
                 elif file_ext in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
                     # For images, download and convert
-                    response = requests.get(doc.file.url, timeout=30)
+                    response = requests.get(file_url, timeout=30)
                     if response.status_code == 200:
                         # Save image temporarily
                         img_bytes = BytesIO(response.content)
@@ -474,7 +482,6 @@ def merge_documents(request, candidate_id):
         messages.error(request, f'Error merging documents: {str(e)}')
     
     return redirect('candidate_documents', candidate_id=candidate.id)
-
 
 @login_required
 def download_merged(request, candidate_id):
