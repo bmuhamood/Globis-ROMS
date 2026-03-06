@@ -19,6 +19,11 @@ import img2pdf
 import mimetypes
 import zipfile
 from django.utils.text import slugify
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+import subprocess
+import tempfile
+import requests
 
 # ============ EXISTING DOCUMENT STATUS VIEWS ============
 
@@ -244,12 +249,11 @@ def upload_document(request, candidate_id):
         if file.size > 10 * 1024 * 1024:
             return JsonResponse({'success': False, 'error': 'File size exceeds 10MB'}, status=400)
         
-        # Validate file type
-        allowed_types = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'doc', 'docx', 'xls', 'xlsx']
+        allowed_types = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'doc', 'docx', 'xls', 'xlsx', 'jfif']
         file_ext = file.name.split('.')[-1].lower()
         if file_ext not in allowed_types:
             return JsonResponse({'success': False, 'error': f'File type .{file_ext} not allowed'}, status=400)
-        
+
         # Require document type selection
         if not document_type_id or not document_type_id.isdigit():
             return JsonResponse({'success': False, 'error': 'Please select a document type'}, status=400)
@@ -389,11 +393,10 @@ def delete_document(request, document_id):
     messages.success(request, 'Document deleted successfully.')
     return redirect('candidate_documents', candidate_id=candidate.id)
 
-
 @login_required
 @require_POST
 def merge_documents(request, candidate_id):
-    """Merge all uploaded documents into a single PDF using local storage"""
+    """Merge all uploaded documents into a single PDF (cloud-compatible with DOC/DOCX support)"""
     candidate = get_object_or_404(Candidate, pk=candidate_id)
     
     documents = candidate.uploaded_documents.all().order_by(
@@ -409,26 +412,109 @@ def merge_documents(request, candidate_id):
         merged_count = 0
         failed_files = []
         
+        import requests
+        from io import BytesIO
+        import subprocess
+        import tempfile
+        import os
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import letter
+        
         for doc in documents:
             file_ext = doc.file_type.lower()
-            file_path = doc.file.path
+            file_url = doc.file.url  # Works with both local and cloud storage
             
             try:
-                if not os.path.exists(file_path):
+                # Download file content
+                response = requests.get(file_url, timeout=30)
+                
+                if response.status_code != 200:
                     failed_files.append(doc.original_filename)
-                    messages.warning(request, f'Skipped {doc.original_filename} - file not found locally.')
+                    messages.warning(request, f'Skipped {doc.original_filename} - could not download.')
                     continue
                 
+                # Handle different file types
                 if file_ext == 'pdf':
-                    with open(file_path, 'rb') as f:
-                        merger.append(f)
+                    # Add PDF directly
+                    merger.append(BytesIO(response.content))
+                    merged_count += 1
+                    
+                elif file_ext in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'jfif']:
+                    # Convert image to PDF
+                    img_bytes = BytesIO(response.content)
+                    pdf_bytes = img2pdf.convert(img_bytes)
+                    merger.append(BytesIO(pdf_bytes))
+                    merged_count += 1
+                    
+                elif file_ext in ['doc', 'docx']:
+                    # Convert Word document to PDF using LibreOffice
+                    try:
+                        with tempfile.NamedTemporaryFile(suffix=f'.{file_ext}', delete=False) as tmp_input:
+                            tmp_input.write(response.content)
+                            tmp_input_path = tmp_input.name
+                        
+                        tmp_output_path = tempfile.mktemp(suffix='.pdf')
+                        
+                        # Use libreoffice to convert (headless mode)
+                        result = subprocess.run([
+                            'libreoffice', '--headless', '--convert-to', 'pdf',
+                            '--outdir', os.path.dirname(tmp_output_path),
+                            tmp_input_path
+                        ], check=True, capture_output=True, text=True)
+                        
+                        # Read the converted PDF
+                        with open(tmp_output_path, 'rb') as pdf_file:
+                            merger.append(BytesIO(pdf_file.read()))
+                        
+                        # Clean up
+                        os.unlink(tmp_input_path)
+                        os.unlink(tmp_output_path)
+                        
                         merged_count += 1
-                elif file_ext in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
-                    with open(file_path, 'rb') as f:
-                        img_bytes = BytesIO(f.read())
-                        pdf_bytes = img2pdf.convert(img_bytes)
-                        merger.append(BytesIO(pdf_bytes))
-                        merged_count += 1
+                        
+                    except Exception as e:
+                        failed_files.append(doc.original_filename)
+                        messages.warning(request, f'Skipped {doc.original_filename} - Word conversion failed: {str(e)}')
+                        
+                elif file_ext == 'txt':
+                    # Convert text file to PDF using reportlab
+                    try:
+                        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_pdf:
+                            # Create PDF with reportlab
+                            c = canvas.Canvas(tmp_pdf.name, pagesize=letter)
+                            text_content = response.content.decode('utf-8', errors='ignore')
+                            
+                            # Set font and size
+                            c.setFont("Helvetica", 10)
+                            
+                            # Write text to PDF with simple line wrapping
+                            y = 750
+                            for line in text_content.split('\n'):
+                                if y < 50:  # New page
+                                    c.showPage()
+                                    c.setFont("Helvetica", 10)
+                                    y = 750
+                                
+                                # Truncate long lines (simple approach)
+                                if len(line) > 100:
+                                    line = line[:97] + "..."
+                                
+                                c.drawString(50, y, line)
+                                y -= 15
+                            
+                            c.save()
+                            
+                            # Read the generated PDF
+                            with open(tmp_pdf.name, 'rb') as pdf_file:
+                                merger.append(BytesIO(pdf_file.read()))
+                            
+                            os.unlink(tmp_pdf.name)
+                            merged_count += 1
+                            
+                    except Exception as e:
+                        failed_files.append(doc.original_filename)
+                        messages.warning(request, f'Skipped {doc.original_filename} - text conversion failed: {str(e)}')
+                        
                 else:
                     failed_files.append(doc.original_filename)
                     messages.warning(request, f'Skipped {doc.original_filename} - unsupported format.')
@@ -449,7 +535,7 @@ def merge_documents(request, candidate_id):
         safe_name = slugify(candidate.full_name)
         merged_filename = f"{candidate.passport_no}_{safe_name}_documents.pdf"
         
-        # Save to local media directory
+        # Save to storage (works with both local and cloud)
         merged_doc, created = MergedDocument.objects.update_or_create(
             candidate=candidate,
             defaults={
@@ -470,27 +556,35 @@ def merge_documents(request, candidate_id):
     
     return redirect('candidate_documents', candidate_id=candidate.id)
 
-
 @login_required
 def download_merged(request, candidate_id):
-    """Download the merged PDF from local storage"""
+    """Download the merged PDF (cloud-compatible)"""
     merged = get_object_or_404(MergedDocument, candidate_id=candidate_id)
-    file_path = merged.file.path
     
-    if os.path.exists(file_path):
-        response = FileResponse(open(file_path, 'rb'))
-        response['Content-Type'] = 'application/pdf'
+    try:
+        # Get the file URL (works for both local and cloud)
+        file_url = merged.file.url
         
         # Create clean filename
         safe_name = slugify(merged.candidate.full_name)
         filename = f"{merged.candidate.passport_no}_{safe_name}_documents.pdf"
         
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        return response
-    else:
-        messages.error(request, 'Merged file not found.')
+        # For local storage in development, we might want to serve directly
+        if settings.DEBUG and hasattr(merged.file, 'path') and os.path.exists(merged.file.path):
+            # Local development - serve file directly
+            response = FileResponse(open(merged.file.path, 'rb'))
+            response['Content-Type'] = 'application/pdf'
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        else:
+            # Production or cloud storage - redirect to URL
+            response = redirect(file_url)
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+            
+    except Exception as e:
+        messages.error(request, f'Merged file not found: {str(e)}')
         return redirect('candidate_documents', candidate_id=candidate_id)
-
 
 @login_required
 def initialize_document_types(request):

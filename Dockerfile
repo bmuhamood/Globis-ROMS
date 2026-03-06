@@ -31,3 +31,8 @@ COPY gunicorn.conf.py /app/
 
 # Run the application (optimized for Cloud Run)
 CMD exec gunicorn --config gunicorn.conf.py globis_hr.wsgi
+
+# Install LibreOffice for Word document conversion
+RUN apt-get update && apt-get install -y \
+    libreoffice \
+    && rm -rf /var/lib/apt/lists/*

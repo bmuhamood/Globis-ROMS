@@ -30,3 +30,4 @@ xlrd==2.0.2
 django-ckeditor-5==0.2.20
 requests
 django-storages[google]
+reportlab==4.1.0
