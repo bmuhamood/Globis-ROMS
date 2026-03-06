@@ -29,4 +29,4 @@ wrapt==2.1.1
 xlrd==2.0.2
 django-ckeditor-5==0.2.20
 requests
-django-storages[google]django-storages[google]
+django-storages[google]
