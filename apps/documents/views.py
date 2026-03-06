@@ -620,3 +620,4 @@ def download_all_documents(request, candidate_id):
     except Exception as e:
         messages.error(request, f'Error creating zip file: {str(e)}')
         return redirect('candidate_documents', candidate_id=candidate.id)
+    

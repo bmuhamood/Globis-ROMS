@@ -20,6 +20,7 @@ env = environ.Env(
     ALLOWED_HOSTS=(list, []),
     CSRF_TRUSTED_ORIGINS=(list, []),
     DATABASE_URL=(str, f'sqlite:///{BASE_DIR}/db.sqlite3'),
+    GS_BUCKET_NAME=(str, 'globis-hr_cloudbuild'),  # Added bucket name env var
 )
 
 # Check for mounted secrets in Cloud Run
@@ -78,6 +79,7 @@ INSTALLED_APPS = [
     
     # Third-party apps
     'django.contrib.humanize',
+    'storages',  # Added for Google Cloud Storage
     
     # Custom apps
     'apps.accounts',
@@ -194,14 +196,37 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
+# ========== MEDIA FILE STORAGE CONFIGURATION ==========
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 FILE_UPLOAD_PERMISSIONS = 0o644
+
+# Media files configuration - Conditional based on environment
+if 'K_SERVICE' in os.environ:  # Running on Cloud Run
+    # Google Cloud Storage for production
+    GS_BUCKET_NAME = env('GS_BUCKET_NAME')
+    GS_LOCATION = 'media'  # Files will be stored in /media/ folder in bucket
+    GS_DEFAULT_ACL = 'publicRead'
+    GS_QUERYSTRING_AUTH = False
+    GS_FILE_OVERWRITE = False
+    
+    # Use Google Cloud Storage for media files
+    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    
+    # Media URL now points to Google Cloud Storage
+    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/media/'
+    
+    # Add storage domain to CSRF trusted origins
+    CSRF_TRUSTED_ORIGINS.append('https://storage.googleapis.com')
+    
+    print(f"✅ Using Google Cloud Storage bucket: {GS_BUCKET_NAME}")
+    print(f"✅ Media URL: {MEDIA_URL}")
+else:
+    # Local development - use local file storage
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    print("📁 Using local media storage for development")
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
