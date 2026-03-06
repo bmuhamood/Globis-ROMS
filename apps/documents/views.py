@@ -384,7 +384,7 @@ def delete_document(request, document_id):
 @login_required
 @require_POST
 def merge_documents(request, candidate_id):
-    """Merge all uploaded documents into a single PDF - Fixed for cloud storage"""
+    """Merge all uploaded documents into a single PDF - Fixed for cloud storage with correct /media/ prefix"""
     candidate = get_object_or_404(Candidate, pk=candidate_id)
     
     documents = candidate.uploaded_documents.all().order_by(
@@ -406,9 +406,11 @@ def merge_documents(request, candidate_id):
             file_ext = doc.file_type.lower()
             
             try:
-                # Construct the full cloud storage URL for the source document
-                file_path = str(doc.file)  # This gives something like: candidate_documents/2026/03/04/filename.pdf
-                file_url = f"https://storage.googleapis.com/{bucket_name}/{file_path}"
+                # FIX: Include /media/ prefix in the URL to match actual storage location
+                file_path = str(doc.file)  # This gives: candidate_documents/2026/03/04/filename.pdf
+                file_url = f"https://storage.googleapis.com/{bucket_name}/media/{file_path}"
+                
+                print(f"Downloading from: {file_url}")  # Debug log
                 
                 if file_ext == 'pdf':
                     response = requests.get(file_url, timeout=30)
@@ -417,7 +419,7 @@ def merge_documents(request, candidate_id):
                         merged_count += 1
                     else:
                         failed_files.append(doc.original_filename)
-                        messages.warning(request, f'Skipped {doc.original_filename} - could not download.')
+                        messages.warning(request, f'Skipped {doc.original_filename} - could not download (HTTP {response.status_code}).')
                         
                 elif file_ext in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
                     response = requests.get(file_url, timeout=30)
@@ -428,7 +430,7 @@ def merge_documents(request, candidate_id):
                         merged_count += 1
                     else:
                         failed_files.append(doc.original_filename)
-                        messages.warning(request, f'Skipped {doc.original_filename} - could not download.')
+                        messages.warning(request, f'Skipped {doc.original_filename} - could not download (HTTP {response.status_code}).')
                 else:
                     failed_files.append(doc.original_filename)
                     messages.warning(request, f'Skipped {doc.original_filename} - unsupported format.')
@@ -449,22 +451,22 @@ def merge_documents(request, candidate_id):
         safe_name = slugify(candidate.full_name)
         merged_filename = f"{candidate.passport_no}_{safe_name}_documents.pdf"
         
-        # Save to cloud storage
-        from django.core.files.base import ContentFile
+        # FIX: Upload to cloud storage with /media/ prefix
         from google.cloud import storage
         
-        # Alternative: Upload directly to bucket
         client = storage.Client()
         bucket = client.bucket(bucket_name)
-        blob = bucket.blob(f"merged_documents/{candidate.id}/{merged_filename}")
+        # Include /media/ in the blob path
+        blob_path = f"media/merged_documents/{candidate.id}/{merged_filename}"
+        blob = bucket.blob(blob_path)
         blob.upload_from_string(merged_pdf.getvalue(), content_type='application/pdf')
         
-        # Update database
+        # Update database - store path WITHOUT /media/ prefix (Django adds it automatically)
         merged_doc, created = MergedDocument.objects.update_or_create(
             candidate=candidate,
             defaults={
                 'created_by': request.user,
-                'file': f"merged_documents/{candidate.id}/{merged_filename}"
+                'file': f"merged_documents/{candidate.id}/{merged_filename}"  # Django adds /media/ automatically
             }
         )
         merged_doc.document_types.set(documents.values_list('document_type', flat=True).distinct())
@@ -486,6 +488,7 @@ def download_merged(request, candidate_id):
     
     try:
         # For cloud storage, redirect to the file URL
+        # Django's storage will add the correct /media/ prefix
         return redirect(merged.file.url)
     except Exception as e:
         messages.error(request, f'Merged file not found: {str(e)}')
@@ -620,4 +623,3 @@ def download_all_documents(request, candidate_id):
     except Exception as e:
         messages.error(request, f'Error creating zip file: {str(e)}')
         return redirect('candidate_documents', candidate_id=candidate.id)
-    
