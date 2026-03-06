@@ -1,0 +1,113 @@
+                              List of relations
+       Schema       |           Name           |    Type     |     Owner     
+--------------------+--------------------------+-------------+---------------
+ information_schema | sql_features             | table       | cloudsqladmin
+ information_schema | sql_implementation_info  | table       | cloudsqladmin
+ information_schema | sql_parts                | table       | cloudsqladmin
+ information_schema | sql_sizing               | table       | cloudsqladmin
+ pg_catalog         | pg_aggregate             | table       | cloudsqladmin
+ pg_catalog         | pg_am                    | table       | cloudsqladmin
+ pg_catalog         | pg_amop                  | table       | cloudsqladmin
+ pg_catalog         | pg_amproc                | table       | cloudsqladmin
+ pg_catalog         | pg_attrdef               | table       | cloudsqladmin
+ pg_catalog         | pg_attribute             | table       | cloudsqladmin
+ pg_catalog         | pg_auth_members          | table       | cloudsqladmin
+ pg_catalog         | pg_authid                | table       | cloudsqladmin
+ pg_catalog         | pg_cast                  | table       | cloudsqladmin
+ pg_catalog         | pg_class                 | table       | cloudsqladmin
+ pg_catalog         | pg_collation             | table       | cloudsqladmin
+ pg_catalog         | pg_constraint            | table       | cloudsqladmin
+ pg_catalog         | pg_conversion            | table       | cloudsqladmin
+ pg_catalog         | pg_database              | table       | cloudsqladmin
+ pg_catalog         | pg_db_role_setting       | table       | cloudsqladmin
+ pg_catalog         | pg_default_acl           | table       | cloudsqladmin
+ pg_catalog         | pg_depend                | table       | cloudsqladmin
+ pg_catalog         | pg_description           | table       | cloudsqladmin
+ pg_catalog         | pg_enum                  | table       | cloudsqladmin
+ pg_catalog         | pg_event_trigger         | table       | cloudsqladmin
+ pg_catalog         | pg_extension             | table       | cloudsqladmin
+ pg_catalog         | pg_foreign_data_wrapper  | table       | cloudsqladmin
+ pg_catalog         | pg_foreign_server        | table       | cloudsqladmin
+ pg_catalog         | pg_foreign_table         | table       | cloudsqladmin
+ pg_catalog         | pg_index                 | table       | cloudsqladmin
+ pg_catalog         | pg_inherits              | table       | cloudsqladmin
+ pg_catalog         | pg_init_privs            | table       | cloudsqladmin
+ pg_catalog         | pg_language              | table       | cloudsqladmin
+ pg_catalog         | pg_largeobject           | table       | cloudsqladmin
+ pg_catalog         | pg_largeobject_metadata  | table       | cloudsqladmin
+ pg_catalog         | pg_namespace             | table       | cloudsqladmin
+ pg_catalog         | pg_opclass               | table       | cloudsqladmin
+ pg_catalog         | pg_operator              | table       | cloudsqladmin
+ pg_catalog         | pg_opfamily              | table       | cloudsqladmin
+ pg_catalog         | pg_parameter_acl         | table       | cloudsqladmin
+ pg_catalog         | pg_partitioned_table     | table       | cloudsqladmin
+ pg_catalog         | pg_policy                | table       | cloudsqladmin
+ pg_catalog         | pg_proc                  | table       | cloudsqladmin
+ pg_catalog         | pg_publication           | table       | cloudsqladmin
+ pg_catalog         | pg_publication_namespace | table       | cloudsqladmin
+ pg_catalog         | pg_publication_rel       | table       | cloudsqladmin
+ pg_catalog         | pg_range                 | table       | cloudsqladmin
+ pg_catalog         | pg_replication_origin    | table       | cloudsqladmin
+ pg_catalog         | pg_rewrite               | table       | cloudsqladmin
+ pg_catalog         | pg_seclabel              | table       | cloudsqladmin
+ pg_catalog         | pg_sequence              | table       | cloudsqladmin
+ pg_catalog         | pg_shdepend              | table       | cloudsqladmin
+ pg_catalog         | pg_shdescription         | table       | cloudsqladmin
+ pg_catalog         | pg_shseclabel            | table       | cloudsqladmin
+ pg_catalog         | pg_statistic             | table       | cloudsqladmin
+ pg_catalog         | pg_statistic_ext         | table       | cloudsqladmin
+ pg_catalog         | pg_statistic_ext_data    | table       | cloudsqladmin
+ pg_catalog         | pg_subscription          | table       | cloudsqladmin
+ pg_catalog         | pg_subscription_rel      | table       | cloudsqladmin
+ pg_catalog         | pg_tablespace            | table       | cloudsqladmin
+ pg_catalog         | pg_transform             | table       | cloudsqladmin
+ pg_catalog         | pg_trigger               | table       | cloudsqladmin
+ pg_catalog         | pg_ts_config             | table       | cloudsqladmin
+ pg_catalog         | pg_ts_config_map         | table       | cloudsqladmin
+ pg_catalog         | pg_ts_dict               | table       | cloudsqladmin
+ pg_catalog         | pg_ts_parser             | table       | cloudsqladmin
+ pg_catalog         | pg_ts_template           | table       | cloudsqladmin
+ pg_catalog         | pg_type                  | table       | cloudsqladmin
+ pg_catalog         | pg_user_mapping          | table       | cloudsqladmin
+ pg_toast           | pg_toast_1213            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_1247            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_1255            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_1260            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_1262            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_13970           | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_13975           | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_13980           | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_13985           | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_1417            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_1418            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2328            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2396            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2600            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2604            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2606            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2609            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2612            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2615            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2618            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2619            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2620            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_2964            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3079            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3118            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3256            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3350            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3381            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3394            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3429            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3456            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3466            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3592            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3596            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_3600            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_6000            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_6100            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_6106            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_6243            | TOAST table | cloudsqladmin
+ pg_toast           | pg_toast_826             | TOAST table | cloudsqladmin
+(108 rows)
+
