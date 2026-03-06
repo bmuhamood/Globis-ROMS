@@ -20,7 +20,7 @@ env = environ.Env(
     ALLOWED_HOSTS=(list, []),
     CSRF_TRUSTED_ORIGINS=(list, []),
     DATABASE_URL=(str, f'sqlite:///{BASE_DIR}/db.sqlite3'),
-    GS_BUCKET_NAME=(str, 'globis-hr_cloudbuild'),  # Added bucket name env var
+    GS_BUCKET_NAME=(str, 'globis-hr_cloudbuild'),
 )
 
 # Check for mounted secrets in Cloud Run
@@ -60,9 +60,9 @@ if 'K_SERVICE' in os.environ:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    CSRF_COOKIE_HTTPONLY = False  # Important: Must be False for CSRF token to work with AJAX
+    CSRF_COOKIE_HTTPONLY = False
     CSRF_COOKIE_SAMESITE = 'Lax'
-    CSRF_USE_SESSIONS = False  # Use cookies instead of sessions for CSRF
+    CSRF_USE_SESSIONS = False
     SESSION_COOKIE_SAMESITE = 'Lax'
     
     print(f"Running on Cloud Run service: {os.environ.get('K_SERVICE')}")
@@ -79,7 +79,7 @@ INSTALLED_APPS = [
     
     # Third-party apps
     'django.contrib.humanize',
-    'storages',  # Added for Google Cloud Storage
+    'storages',
     
     # Custom apps
     'apps.accounts',
@@ -93,12 +93,9 @@ INSTALLED_APPS = [
     'apps.finance',
     'apps.reports',
     'apps.imports',
-    'django_ckeditor_5',  # Only CKEditor 5
+    'django_ckeditor_5',
     'apps.jobs.apps.JobsConfig',
 ]
-
-# Remove all CKEditor 4 configurations
-# Only keep CKEditor 5 configuration
 
 CKEDITOR_5_CONFIGS = {
     'default': {
@@ -120,14 +117,14 @@ CKEDITOR_5_CONFIGS = {
     },
 }
 
-CKEDITOR_5_FILE_UPLOAD_PERMISSION = "staff"  # or "authenticated"
+CKEDITOR_5_FILE_UPLOAD_PERMISSION = "staff"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',  # This must be here
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -202,30 +199,14 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 FILE_UPLOAD_PERMISSIONS = 0o644
 
-# Media files configuration - Conditional based on environment
-if 'K_SERVICE' in os.environ:  # Running on Cloud Run
-    # Google Cloud Storage for production
-    GS_BUCKET_NAME = env('GS_BUCKET_NAME')
-    GS_LOCATION = 'media'  # Files will be stored in /media/ folder in bucket
-    GS_DEFAULT_ACL = 'publicRead'
-    GS_QUERYSTRING_AUTH = False
-    GS_FILE_OVERWRITE = False
-    
-    # Use Google Cloud Storage for media files
-    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-    
-    # Media URL now points to Google Cloud Storage
-    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/media/'
-    
-    # Add storage domain to CSRF trusted origins
-    CSRF_TRUSTED_ORIGINS.append('https://storage.googleapis.com')
-    
-    print(f"✅ Using Google Cloud Storage bucket: {GS_BUCKET_NAME}")
-    print(f"✅ Media URL: {MEDIA_URL}")
+# Media files configuration - Using local storage for both development and production
+# Cloud Storage is temporarily disabled due to memory issues
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+if 'K_SERVICE' in os.environ:
+    print("📁 Using local media storage for production (Cloud Storage disabled)")
 else:
-    # Local development - use local file storage
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     print("📁 Using local media storage for development")
 
 # Default primary key field type
@@ -254,7 +235,6 @@ if not DEBUG:
     DATABASES['default']['CONN_MAX_AGE'] = 600
 
 # ========== FIX FOR PYTHON 3.14 RECURSION ERROR ==========
-# Fix logging recursion issue in Python 3.14
 logging.basicConfig(force=True)
 
 LOGGING = {
@@ -280,6 +260,5 @@ LOGGING = {
         'handlers': ['console'],
         'level': 'INFO',
     },
-    # Prevent recursive logging
     'incremental': True,
 }

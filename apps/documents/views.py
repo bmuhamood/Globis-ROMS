@@ -17,7 +17,6 @@ from io import BytesIO
 from PIL import Image
 import img2pdf
 import mimetypes
-import requests  # Added for cloud storage
 import zipfile
 from django.utils.text import slugify
 
@@ -179,7 +178,7 @@ def candidate_documents(request, candidate_id):
     """View all documents for a specific candidate with upload interface"""
     candidate = get_object_or_404(Candidate, pk=candidate_id)
     
-    # Get ALL documents - removed is_latest filter to show all uploaded files
+    # Get ALL documents
     documents = candidate.uploaded_documents.all().select_related(
         'document_type', 'uploaded_by'
     ).order_by('document_type__order', '-uploaded_at')
@@ -215,7 +214,7 @@ def candidate_documents(request, candidate_id):
     # Get merged document if exists
     merged_doc = MergedDocument.objects.filter(candidate=candidate).first()
     
-    # Calculate missing documents - check if at least ONE document exists for each required type
+    # Calculate missing documents
     uploaded_types = documents.values_list('document_type_id', flat=True).distinct()
     missing_types = document_types.exclude(id__in=uploaded_types).filter(required=True)
     
@@ -234,7 +233,7 @@ def candidate_documents(request, candidate_id):
 @login_required
 @require_POST
 def upload_document(request, candidate_id):
-    """Handle single document upload via AJAX - Updated to allow multiple files of same type"""
+    """Handle single document upload via AJAX"""
     candidate = get_object_or_404(Candidate, pk=candidate_id)
     
     try:
@@ -251,21 +250,20 @@ def upload_document(request, candidate_id):
         if file_ext not in allowed_types:
             return JsonResponse({'success': False, 'error': f'File type .{file_ext} not allowed'}, status=400)
         
-        # Require document type selection (no auto-detect)
+        # Require document type selection
         if not document_type_id or not document_type_id.isdigit():
             return JsonResponse({'success': False, 'error': 'Please select a document type'}, status=400)
         
         document_type = get_object_or_404(DocumentType, pk=document_type_id)
         
-        # Get the next version number for this document type
+        # Get the next version number
         existing_docs = candidate.uploaded_documents.filter(
             document_type=document_type
         ).count()
         
         next_version = existing_docs + 1
         
-        # Save new document - DON'T mark previous ones as not latest
-        # This allows multiple documents of the same type to be visible
+        # Save new document
         doc = CandidateDocument.objects.create(
             candidate=candidate,
             document_type=document_type,
@@ -275,10 +273,10 @@ def upload_document(request, candidate_id):
             file_type=file_ext,
             uploaded_by=request.user,
             version=next_version,
-            is_latest=True  # All documents are considered "latest" for display
+            is_latest=True
         )
         
-        # Update DocumentStatus (mark as true if at least one exists)
+        # Update DocumentStatus
         doc_status, created = DocumentStatus.objects.get_or_create(candidate=candidate)
         
         if document_type.code == 'medical':
@@ -313,41 +311,51 @@ def upload_document(request, candidate_id):
 
 @login_required
 def download_document(request, document_id):
-    """Download a single document - Updated for cloud storage"""
+    """Download a single document using local storage"""
     doc = get_object_or_404(CandidateDocument, pk=document_id)
+    file_path = doc.file.path
     
-    try:
-        # For cloud storage, redirect to the file URL
-        return redirect(doc.file.url)
-    except Exception as e:
-        messages.error(request, f'File not found: {str(e)}')
+    if os.path.exists(file_path):
+        response = FileResponse(open(file_path, 'rb'))
+        response['Content-Type'] = 'application/octet-stream'
+        response['Content-Disposition'] = f'attachment; filename="{doc.original_filename}"'
+        return response
+    else:
+        messages.error(request, 'File not found.')
         return redirect('candidate_documents', candidate_id=doc.candidate.id)
 
 
 @login_required
 def view_document(request, document_id):
-    """View a document in browser - Updated for cloud storage"""
+    """View a document in browser using local storage"""
     doc = get_object_or_404(CandidateDocument, pk=document_id)
+    file_path = doc.file.path
     
-    try:
-        # For cloud storage, redirect to the file URL
-        return redirect(doc.file.url)
-    except Exception as e:
-        messages.error(request, f'File not found: {str(e)}')
+    if os.path.exists(file_path):
+        content_type, encoding = mimetypes.guess_type(file_path)
+        response = FileResponse(open(file_path, 'rb'))
+        response['Content-Type'] = content_type or 'application/octet-stream'
+        response['Content-Disposition'] = f'inline; filename="{doc.original_filename}"'
+        return response
+    else:
+        messages.error(request, 'File not found.')
         return redirect('candidate_documents', candidate_id=doc.candidate.id)
 
 
 @login_required
 @require_POST
 def delete_document(request, document_id):
-    """Delete a document - Updated to properly update status"""
+    """Delete a document"""
     doc = get_object_or_404(CandidateDocument, pk=document_id)
     candidate = doc.candidate
     
-    # Delete the document (file will be handled by Django's storage)
+    # Delete file if it exists
+    if os.path.exists(doc.file.path):
+        os.remove(doc.file.path)
+    
     doc.delete()
     
-    # Update DocumentStatus - check if ANY documents of each type exist
+    # Update DocumentStatus
     doc_status, created = DocumentStatus.objects.get_or_create(candidate=candidate)
     
     # Check if at least one document exists for each type
@@ -379,12 +387,13 @@ def delete_document(request, document_id):
     doc_status.save()
     
     messages.success(request, 'Document deleted successfully.')
-    return redirect('candidate_documents', candidate_id=candidate.id) 
+    return redirect('candidate_documents', candidate_id=candidate.id)
+
 
 @login_required
 @require_POST
 def merge_documents(request, candidate_id):
-    """Merge all uploaded documents into a single PDF"""
+    """Merge all uploaded documents into a single PDF using local storage"""
     candidate = get_object_or_404(Candidate, pk=candidate_id)
     
     documents = candidate.uploaded_documents.all().order_by(
@@ -400,38 +409,29 @@ def merge_documents(request, candidate_id):
         merged_count = 0
         failed_files = []
         
-        bucket_name = "globis-hr_cloudbuild"
-        
         for doc in documents:
             file_ext = doc.file_type.lower()
+            file_path = doc.file.path
             
             try:
-                # Use the actual stored file path from the database
-                # This already has underscores instead of spaces
-                file_path = str(doc.file)  # This gives the correct stored path
-                file_url = f"https://storage.googleapis.com/{bucket_name}/media/{file_path}"
+                if not os.path.exists(file_path):
+                    failed_files.append(doc.original_filename)
+                    messages.warning(request, f'Skipped {doc.original_filename} - file not found locally.')
+                    continue
                 
-                print(f"Downloading from: {file_url}")
-                print(f"Original filename: {doc.original_filename}")
-                print(f"Stored path: {file_path}")
-                
-                response = requests.get(file_url, timeout=30)
-                
-                if response.status_code == 200:
-                    if file_ext == 'pdf':
-                        merger.append(BytesIO(response.content))
+                if file_ext == 'pdf':
+                    with open(file_path, 'rb') as f:
+                        merger.append(f)
                         merged_count += 1
-                    elif file_ext in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
-                        img_bytes = BytesIO(response.content)
+                elif file_ext in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
+                    with open(file_path, 'rb') as f:
+                        img_bytes = BytesIO(f.read())
                         pdf_bytes = img2pdf.convert(img_bytes)
                         merger.append(BytesIO(pdf_bytes))
                         merged_count += 1
-                    else:
-                        failed_files.append(doc.original_filename)
-                        messages.warning(request, f'Skipped {doc.original_filename} - unsupported format.')
                 else:
                     failed_files.append(doc.original_filename)
-                    messages.warning(request, f'Skipped {doc.original_filename} - could not download (HTTP {response.status_code}).')
+                    messages.warning(request, f'Skipped {doc.original_filename} - unsupported format.')
                     
             except Exception as e:
                 failed_files.append(doc.original_filename)
@@ -441,7 +441,7 @@ def merge_documents(request, candidate_id):
             messages.error(request, 'No valid documents to merge.')
             return redirect('candidate_documents', candidate_id=candidate.id)
         
-        # Rest of the function remains the same...
+        # Save merged PDF
         merged_pdf = BytesIO()
         merger.write(merged_pdf)
         merged_pdf.seek(0)
@@ -449,20 +449,15 @@ def merge_documents(request, candidate_id):
         safe_name = slugify(candidate.full_name)
         merged_filename = f"{candidate.passport_no}_{safe_name}_documents.pdf"
         
-        from google.cloud import storage
-        client = storage.Client()
-        bucket = client.bucket(bucket_name)
-        blob_path = f"media/merged_documents/{candidate.id}/{merged_filename}"
-        blob = bucket.blob(blob_path)
-        blob.upload_from_string(merged_pdf.getvalue(), content_type='application/pdf')
-        
+        # Save to local media directory
         merged_doc, created = MergedDocument.objects.update_or_create(
             candidate=candidate,
             defaults={
                 'created_by': request.user,
-                'file': f"merged_documents/{candidate.id}/{merged_filename}"
             }
         )
+        
+        merged_doc.file.save(merged_filename, ContentFile(merged_pdf.getvalue()))
         merged_doc.document_types.set(documents.values_list('document_type', flat=True).distinct())
         
         if failed_files:
@@ -475,17 +470,25 @@ def merge_documents(request, candidate_id):
     
     return redirect('candidate_documents', candidate_id=candidate.id)
 
+
 @login_required
 def download_merged(request, candidate_id):
-    """Download the merged PDF - Updated for cloud storage"""
+    """Download the merged PDF from local storage"""
     merged = get_object_or_404(MergedDocument, candidate_id=candidate_id)
+    file_path = merged.file.path
     
-    try:
-        # For cloud storage, redirect to the file URL
-        # Django's storage will add the correct /media/ prefix
-        return redirect(merged.file.url)
-    except Exception as e:
-        messages.error(request, f'Merged file not found: {str(e)}')
+    if os.path.exists(file_path):
+        response = FileResponse(open(file_path, 'rb'))
+        response['Content-Type'] = 'application/pdf'
+        
+        # Create clean filename
+        safe_name = slugify(merged.candidate.full_name)
+        filename = f"{merged.candidate.passport_no}_{safe_name}_documents.pdf"
+        
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    else:
+        messages.error(request, 'Merged file not found.')
         return redirect('candidate_documents', candidate_id=candidate_id)
 
 
@@ -541,7 +544,10 @@ def bulk_delete_documents(request, candidate_id):
     for doc_id in document_ids:
         try:
             doc = CandidateDocument.objects.get(pk=doc_id, candidate=candidate)
-            doc.delete()  # File will be handled by Django's storage
+            # Delete file
+            if os.path.exists(doc.file.path):
+                os.remove(doc.file.path)
+            doc.delete()
             deleted_count += 1
         except CandidateDocument.DoesNotExist:
             continue
@@ -583,7 +589,7 @@ def bulk_delete_documents(request, candidate_id):
 
 @login_required
 def download_all_documents(request, candidate_id):
-    """Download all documents for a candidate as a zip file - Updated for cloud storage"""
+    """Download all documents for a candidate as a zip file using local storage"""
     candidate = get_object_or_404(Candidate, pk=candidate_id)
     documents = candidate.uploaded_documents.all()
     
@@ -591,29 +597,22 @@ def download_all_documents(request, candidate_id):
         messages.error(request, 'No documents found for this candidate.')
         return redirect('candidate_documents', candidate_id=candidate.id)
     
-    try:
-        # Create a zip file in memory
-        zip_buffer = BytesIO()
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for doc in documents:
-                try:
-                    # Download file from cloud storage
-                    response = requests.get(doc.file.url, timeout=30)
-                    if response.status_code == 200:
-                        # Add to zip with a clean filename
-                        arcname = f"{doc.document_type.name}_{doc.original_filename}"
-                        zip_file.writestr(arcname, response.content)
-                except Exception as e:
-                    messages.warning(request, f'Could not include {doc.original_filename}: {str(e)}')
-        
-        # Prepare response
-        zip_buffer.seek(0)
-        response = HttpResponse(zip_buffer, content_type='application/zip')
-        safe_name = slugify(candidate.full_name)
-        response['Content-Disposition'] = f'attachment; filename="{safe_name}_documents.zip"'
-        
-        return response
-        
-    except Exception as e:
-        messages.error(request, f'Error creating zip file: {str(e)}')
-        return redirect('candidate_documents', candidate_id=candidate.id)
+    import zipfile
+    from io import BytesIO
+    
+    # Create a zip file in memory
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for doc in documents:
+            if doc.file and os.path.exists(doc.file.path):
+                # Add file to zip with a clean filename
+                arcname = f"{doc.document_type.name}_{doc.original_filename}"
+                zip_file.write(doc.file.path, arcname)
+    
+    # Prepare response
+    zip_buffer.seek(0)
+    response = HttpResponse(zip_buffer, content_type='application/zip')
+    safe_name = slugify(candidate.full_name)
+    response['Content-Disposition'] = f'attachment; filename="{safe_name}_documents.zip"'
+    
+    return response
