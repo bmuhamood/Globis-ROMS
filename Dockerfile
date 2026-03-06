@@ -26,11 +26,8 @@ COPY . .
 # Collect static files
 RUN python manage.py collectstatic --no-input
 
+# Copy gunicorn config
+COPY gunicorn.conf.py /app/
+
 # Run the application (optimized for Cloud Run)
-CMD exec gunicorn --bind 0.0.0.0:$PORT \
-    --workers 1 \
-    --threads 4 \
-    --timeout 120 \
-    --max-requests 200 \
-    --max-requests-jitter 50 \
-    globis_hr.wsgi:application
+CMD exec gunicorn --config gunicorn.conf.py globis_hr.wsgi
