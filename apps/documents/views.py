@@ -23,7 +23,6 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import subprocess
 import tempfile
-import requests
 
 # ============ EXISTING DOCUMENT STATUS VIEWS ============
 
@@ -393,10 +392,11 @@ def delete_document(request, document_id):
     messages.success(request, 'Document deleted successfully.')
     return redirect('candidate_documents', candidate_id=candidate.id)
 
+
 @login_required
 @require_POST
 def merge_documents(request, candidate_id):
-    """Merge all uploaded documents into a single PDF (cloud-compatible with DOC/DOCX support)"""
+    """Merge all uploaded documents into a single PDF using local storage"""
     candidate = get_object_or_404(Candidate, pk=candidate_id)
     
     documents = candidate.uploaded_documents.all().order_by(
@@ -412,45 +412,33 @@ def merge_documents(request, candidate_id):
         merged_count = 0
         failed_files = []
         
-        import requests
-        from io import BytesIO
-        import subprocess
-        import tempfile
-        import os
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import letter
-        
         for doc in documents:
             file_ext = doc.file_type.lower()
-            file_url = doc.file.url  # Works with both local and cloud storage
+            file_path = doc.file.path
             
             try:
-                # Download file content
-                response = requests.get(file_url, timeout=30)
-                
-                if response.status_code != 200:
+                if not os.path.exists(file_path):
                     failed_files.append(doc.original_filename)
-                    messages.warning(request, f'Skipped {doc.original_filename} - could not download.')
+                    messages.warning(request, f'Skipped {doc.original_filename} - file not found locally.')
                     continue
                 
-                # Handle different file types
                 if file_ext == 'pdf':
-                    # Add PDF directly
-                    merger.append(BytesIO(response.content))
-                    merged_count += 1
-                    
+                    with open(file_path, 'rb') as f:
+                        merger.append(f)
+                        merged_count += 1
                 elif file_ext in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'jfif']:
-                    # Convert image to PDF
-                    img_bytes = BytesIO(response.content)
-                    pdf_bytes = img2pdf.convert(img_bytes)
-                    merger.append(BytesIO(pdf_bytes))
-                    merged_count += 1
-                    
+                    with open(file_path, 'rb') as f:
+                        img_bytes = BytesIO(f.read())
+                        pdf_bytes = img2pdf.convert(img_bytes)
+                        merger.append(BytesIO(pdf_bytes))
+                        merged_count += 1
                 elif file_ext in ['doc', 'docx']:
                     # Convert Word document to PDF using LibreOffice
                     try:
+                        # Use local file path directly
                         with tempfile.NamedTemporaryFile(suffix=f'.{file_ext}', delete=False) as tmp_input:
-                            tmp_input.write(response.content)
+                            with open(file_path, 'rb') as source_file:
+                                tmp_input.write(source_file.read())
                             tmp_input_path = tmp_input.name
                         
                         tmp_output_path = tempfile.mktemp(suffix='.pdf')
@@ -482,7 +470,10 @@ def merge_documents(request, candidate_id):
                         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_pdf:
                             # Create PDF with reportlab
                             c = canvas.Canvas(tmp_pdf.name, pagesize=letter)
-                            text_content = response.content.decode('utf-8', errors='ignore')
+                            
+                            # Read text from local file
+                            with open(file_path, 'r', encoding='utf-8', errors='ignore') as text_file:
+                                text_content = text_file.read()
                             
                             # Set font and size
                             c.setFont("Helvetica", 10)
@@ -535,7 +526,7 @@ def merge_documents(request, candidate_id):
         safe_name = slugify(candidate.full_name)
         merged_filename = f"{candidate.passport_no}_{safe_name}_documents.pdf"
         
-        # Save to storage (works with both local and cloud)
+        # Save to local media directory
         merged_doc, created = MergedDocument.objects.update_or_create(
             candidate=candidate,
             defaults={
@@ -556,35 +547,27 @@ def merge_documents(request, candidate_id):
     
     return redirect('candidate_documents', candidate_id=candidate.id)
 
+
 @login_required
 def download_merged(request, candidate_id):
-    """Download the merged PDF (cloud-compatible)"""
+    """Download the merged PDF from local storage"""
     merged = get_object_or_404(MergedDocument, candidate_id=candidate_id)
+    file_path = merged.file.path
     
-    try:
-        # Get the file URL (works for both local and cloud)
-        file_url = merged.file.url
+    if os.path.exists(file_path):
+        response = FileResponse(open(file_path, 'rb'))
+        response['Content-Type'] = 'application/pdf'
         
         # Create clean filename
         safe_name = slugify(merged.candidate.full_name)
         filename = f"{merged.candidate.passport_no}_{safe_name}_documents.pdf"
         
-        # For local storage in development, we might want to serve directly
-        if settings.DEBUG and hasattr(merged.file, 'path') and os.path.exists(merged.file.path):
-            # Local development - serve file directly
-            response = FileResponse(open(merged.file.path, 'rb'))
-            response['Content-Type'] = 'application/pdf'
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            return response
-        else:
-            # Production or cloud storage - redirect to URL
-            response = redirect(file_url)
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            return response
-            
-    except Exception as e:
-        messages.error(request, f'Merged file not found: {str(e)}')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    else:
+        messages.error(request, 'Merged file not found.')
         return redirect('candidate_documents', candidate_id=candidate_id)
+
 
 @login_required
 def initialize_document_types(request):
